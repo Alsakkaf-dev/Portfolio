@@ -4,148 +4,128 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mohammed Alsakkaf | Architect of Solutions</title>
-    <meta name="description"
-        content="Portfolio of Mohammed Alsakkaf - Software Engineering Student specializing in precision development and aesthetic design.">
+    <title>Mohammed Alsakkaf | Software Architect</title>
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-    <!-- Background Architecture -->
-    <div id="liquid-bg">
-        <div class="blob" style="top: 10%; left: -5%; background: rgba(255,170,0,0.15); filter: url(#liquid);"></div>
-        <div class="blob" style="top: 60%; right: -10%; background: rgba(255,0,85,0.1); filter: url(#liquid);"></div>
-    </div>
-
-    <!-- The Liquid Physics Definition -->
-    <svg style="display:none;">
-        <defs>
-            <filter id="liquid">
-                <feTurbulence type="fractalNoise" baseFrequency="0.01" numOctaves="3" result="noise" />
-                <feDisplacementMap in="SourceGraphic" in2="noise" scale="15" />
-            </filter>
-        </defs>
-    </svg>
-
-    <!-- Interface Layers -->
-    <div class="master-cursor"></div>
-    <div class="cursor-follower"></div>
-    <div class="page-transition"></div>
+    <!-- Premium Interface Layers -->
+    <div class="cursor-dot"></div>
+    <div class="cursor-ring"></div>
 
     <header>
-        <div class="container nav-grid">
-            <div class="logo">M.AL_SAKKAF</div>
+        <div class="container nav-container">
+            <div class="logo">MOHAMMED.AS</div>
             <nav class="nav-links">
-                <a href="#about" class="nav-link">Vision</a>
-                <a href="#projects" class="nav-link">Projects</a>
-                <a href="#philosophy" class="nav-link">Logic</a>
-                <a href="#contact" class="nav-link">Connect</a>
+                <a href="#about" class="nav-link">About</a>
+                <a href="#projects" class="nav-link">Work</a>
+                <a href="#contact" class="nav-link">Contact</a>
             </nav>
         </div>
     </header>
 
     <main>
-        <!-- Hero: The Statement -->
+        <!-- Hero: Absolute Clarity -->
         <section class="hero">
             <div class="container">
-                <div class="hero-mask">
-                    <h1 class="hero-title">
-                        <span class="split-line">PRECISION</span>
-                        <span class="split-line">MEETS</span>
-                        <span class="split-line" style="color: var(--c-primary)">PURPOSE.</span>
-                    </h1>
-                </div>
-                <p class="hero-subtitle animate-on-load">
-                    Software Engineering student based in Malaysia. Architecting digital experiences through the lens of
-                    deep work and aesthetic integrity.
+                <h1 class="hero-title" data-reveal>
+                    Building <span class="gradient-text">Future-Ready</span><br>Digital Logic.
+                </h1>
+                <p class="hero-subtitle" data-reveal style="transition-delay: 0.1s">
+                    Software Engineering student dedicated to precision, performance, and crystal-clear design.
+                    Currently architecting solutions in Johor Bahru, Malaysia.
                 </p>
+                <div class="btn-group" data-reveal style="transition-delay: 0.2s">
+                    <a href="#projects" class="btn btn-primary">View My Work</a>
+                    <a href="#contact" class="btn" style="border: 2px solid var(--border-subtle);">Let's Talk</a>
+                </div>
             </div>
         </section>
 
-        <!-- Vision -->
+        <!-- About: Crisp Structure -->
         <section id="about">
             <div class="container">
-                <div class="grid-layout">
-                    <div class="card-obsidian">
-                        <span class="card-num">01</span>
-                        <h3 class="hero-subtitle" style="color:#fff; margin-bottom:1rem;">THE JOURNEY</h3>
-                        <p>From Yemen to Malaysia, my path is defined by resilience and a global perspective on
-                            technology and growth.</p>
+                <span class="section-tag" data-reveal>My Vision</span>
+                <h2 class="section-title" data-reveal>The Architect's Path</h2>
+                <div class="grid">
+                    <div class="card" data-reveal style="transition-delay: 0.1s">
+                        <h3>Deep Mastery</h3>
+                        <p>I prioritize full understanding and step-by-step precision. My work is built on solid
+                            foundations, never shortcuts.</p>
                     </div>
-                    <div class="card-obsidian" style="border-color: var(--c-primary)">
-                        <span class="card-num">02</span>
-                        <h3 class="hero-subtitle" style="color:#fff; margin-bottom:1rem;">DEEP WORK</h3>
-                        <p>I don't just write code; I architect systems. My philosophy prioritizes depth and mastery
-                            over superficial speed.</p>
+                    <div class="card" data-reveal style="transition-delay: 0.2s">
+                        <h3>Global Mindset</h3>
+                        <p>From Yemen to Malaysia, my journey has taught me resilience and adaptability in a fast-paced
+                            global landscape.</p>
                     </div>
-                    <div class="card-obsidian">
-                        <span class="card-num">03</span>
-                        <h3 class="hero-subtitle" style="color:#fff; margin-bottom:1rem;">ESTHETICS</h3>
-                        <p>A technical solution is only complete when it is beautiful. I bridge the gap between back-end
-                            logic and front-end art.</p>
+                    <div class="card" data-reveal style="transition-delay: 0.3s">
+                        <h3>Crystal Logic</h3>
+                        <p>I believe in design that serves function. Every pixel and line of code has a clear,
+                            performance-driven purpose.</p>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Projects -->
-        <section id="projects">
+        <!-- Projects: High Impact -->
+        <section id="projects" style="background: var(--bg-subtle);">
             <div class="container">
-                <h2 class="hero-title" style="font-size: 3rem; margin-bottom: 4rem;">SELECTED WORK</h2>
-                <div class="grid-layout">
-                    <div class="project-reveal">
-                        <img src="assets/images/quizzup-preview.png" alt="QuizzUp" class="project-img">
-                        <div class="project-overlay">
-                            <h3 class="hero-subtitle" style="color: #fff; font-weight: 700;">QUIZZUP PRO</h3>
-                            <p style="margin-bottom: 2rem;">Learning management with gamified logic and sleek UI.</p>
-                            <a href="projects/quizzup/index.html" class="nav-link"
-                                style="color: var(--c-primary); font-weight: 800;">EXPLORE ARCHITECTURE →</a>
-                        </div>
+                <span class="section-tag" data-reveal>Selected Work</span>
+                <h2 class="section-title" data-reveal>Featured Projects</h2>
+
+                <div class="project-card" data-reveal>
+                    <div class="project-info">
+                        <h3 class="section-title" style="font-size: 2rem; margin-bottom: 1rem;">QuizzUp Pro</h3>
+                        <p style="margin-bottom: 2rem; color: var(--t-body);">A sophisticated learning management
+                            platform with a focus on competition, real-time analytics, and premium UX.</p>
+                        <a href="projects/quizzup/index.html" class="btn btn-primary"
+                            style="padding: 0.75rem 1.5rem;">Explore Architecture</a>
+                    </div>
+                    <div class="project-img-wrapper">
+                        <img src="assets/images/quizzup-preview.png" alt="QuizzUp Pro" class="project-img">
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Logic Section -->
-        <section id="philosophy">
-            <div class="container" style="text-align: center;">
-                <p class="hero-subtitle" style="max-width: 800px; margin: 0 auto; font-style: italic;">
-                    "Quality over speed. Precision over haste. Excellence over shortcuts. This is the code I live by."
-                </p>
-            </div>
-        </section>
-
-        <!-- Contact -->
+        <!-- Contact: Professional Connect -->
         <section id="contact">
             <div class="container">
-                <div class="grid-layout">
-                    <div>
-                        <h2 class="hero-title" style="font-size: 4rem;">LET'S START THE DIALOGUE.</h2>
-                    </div>
-                    <div>
-                        <form id="contact-form">
-                            <input type="text" placeholder="WHO ARE YOU?" class="input-futur" required>
-                            <input type="email" placeholder="WHERE CAN I REACH YOU?" class="input-futur" required
-                                style="margin-top: 3rem;">
-                            <textarea placeholder="WHAT SHALL WE BUILD?" class="input-futur"
-                                style="margin-top: 3rem; min-height: 150px;"></textarea>
-                            <button type="submit" class="nav-link"
-                                style="background: none; border: none; font-size: 1.5rem; margin-top: 4rem; cursor: pointer; color: var(--c-primary)">SEND
-                                TRANSMISSION →</button>
-                        </form>
-                    </div>
+                <div style="text-align: center; max-width: 800px; margin: 0 auto;">
+                    <span class="section-tag" data-reveal>Contact</span>
+                    <h2 class="section-title" data-reveal>Let's Start a Conversation</h2>
+                    <form id="contact-form" style="text-align: left; margin-top: 3rem;">
+                        <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                            <div class="input-group" data-reveal>
+                                <input type="text" placeholder="Name" class="input" required>
+                            </div>
+                            <div class="input-group" data-reveal style="transition-delay: 0.1s">
+                                <input type="email" placeholder="Email" class="input" required>
+                            </div>
+                        </div>
+                        <div class="input-group" data-reveal style="transition-delay: 0.2s">
+                            <textarea placeholder="Tell me about your vision..." class="input" rows="5"
+                                required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary"
+                            style="width: 100%; border: none; cursor: pointer;" data-reveal
+                            style="transition-delay: 0.3s">Send Message</button>
+                    </form>
                 </div>
             </div>
         </section>
     </main>
 
-    <footer style="padding: 5vh 0; border-top: 1px solid var(--glass-border);">
-        <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
-            <p style="font-size: 0.8rem; letter-spacing: 0.1em; color: var(--t-muted);">© 2026 ARCHITECTED BY MOHAMMED
-                ALSAKKAF</p>
-            <div style="display: flex; gap: 2rem;">
-                <a href="https://github.com/MohammedAlsakkaf2003" class="nav-link">GH</a>
-                <a href="mailto:zoer4019@gmail.com" class="nav-link">EM</a>
+    <footer style="padding: 4rem 0; background: var(--t-header); color: #fff; text-align: center;">
+        <div class="container">
+            <h2 style="font-size: 1.5rem; margin-bottom: 1rem;">MOHAMMED ALSAKKAF</h2>
+            <p style="opacity: 0.6; margin-bottom: 2rem;">Quality over speed. Precision over haste. Excellence over
+                shortcuts.</p>
+            <div style="display: flex; justify-content: center; gap: 2rem;">
+                <a href="https://github.com/MohammedAlsakkaf2003"
+                    style="color: #fff; text-decoration: none; font-weight: 700;">GitHub</a>
+                <a href="mailto:zoer4019@gmail.com"
+                    style="color: #fff; text-decoration: none; font-weight: 700;">Email</a>
             </div>
         </div>
     </footer>

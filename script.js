@@ -1,175 +1,105 @@
 /**
- * THE ARCHITECT'S ENGINE v2.0
- * Mohammed Alsakkaf - Advanced Interaction Controller
+ * CRYSTAL ENGINE v1.0
+ * High-performance, clean interaction controller
  */
 
 'use strict';
 
-const Engine = {
+const Crystal = {
     init() {
         this.cursor();
-        this.scrollReactions();
-        this.magneticItems();
-        this.animations();
+        this.reveal();
         this.smoothScroll();
-        this.parallax();
-        console.log("%c ARCHITECT ENGINE LOADED ", "background: #ffaa00; color: #000; font-weight: bold;");
+        this.navbar();
+        console.log("%c CRYSTAL UI LOADED ", "background: #4f46e5; color: #fff; font-weight: bold; padding: 4px;");
     },
 
-    // Premium Cursor Logic
     cursor() {
-        const dot = document.querySelector('.master-cursor');
-        const follower = document.querySelector('.cursor-follower');
+        const dot = document.querySelector('.cursor-dot');
+        const ring = document.querySelector('.cursor-ring');
 
-        if (!dot || !follower) return;
-
-        let mx = 0, my = 0;
-        let dx = 0, dy = 0;
-        let fx = 0, fy = 0;
+        let mouse = { x: 0, y: 0 };
+        let dotPos = { x: 0, y: 0 };
+        let ringPos = { x: 0, y: 0 };
 
         window.addEventListener('mousemove', e => {
-            mx = e.clientX;
-            my = e.clientY;
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
         });
 
-        const loop = () => {
-            // Inner dot speed
-            dx += (mx - dx) * 0.2;
-            dy += (my - dy) * 0.2;
-            dot.style.transform = `translate(${dx}px, ${dy}px)`;
+        const tick = () => {
+            // Smooth lerping
+            dotPos.x += (mouse.x - dotPos.x) * 0.2;
+            dotPos.y += (mouse.y - dotPos.y) * 0.2;
 
-            // Outer follower speed (delay effect)
-            fx += (mx - fx) * 0.1;
-            fy += (my - fy) * 0.1;
-            follower.style.transform = `translate(${fx - 15}px, ${fy - 15}px)`;
+            ringPos.x += (mouse.x - ringPos.x) * 0.1;
+            ringPos.y += (mouse.y - ringPos.y) * 0.1;
 
-            requestAnimationFrame(loop);
+            if (dot) dot.style.transform = `translate(${dotPos.x - 4}px, ${dotPos.y - 4}px)`;
+            if (ring) ring.style.transform = `translate(${ringPos.x - 20}px, ${ringPos.y - 20}px)`;
+
+            requestAnimationFrame(tick);
         };
-        loop();
+        tick();
 
-        // Hover expansions
-        document.querySelectorAll('a, button, .card-obsidian').forEach(el => {
-            el.addEventListener('mouseenter', () => {
-                follower.style.width = '80px';
-                follower.style.height = '80px';
-                follower.style.transform = `translate(${fx - 35}px, ${fy - 35}px)`;
-                follower.style.background = 'rgba(255, 170, 0, 0.1)';
+        // Hover states
+        const targets = document.querySelectorAll('a, button, .card, .project-card');
+        targets.forEach(t => {
+            t.addEventListener('mouseenter', () => {
+                ring.style.width = '60px';
+                ring.style.height = '60px';
+                ring.style.transform = `translate(${ringPos.x - 30}px, ${ringPos.y - 30}px)`;
+                ring.style.background = 'rgba(79, 70, 229, 0.1)';
+                ring.style.borderColor = 'transparent';
             });
-            el.addEventListener('mouseleave', () => {
-                follower.style.width = '40px';
-                follower.style.height = '40px';
-                follower.style.background = 'transparent';
-            });
-        });
-    },
-
-    // Magnetic Gravity for Buttons
-    magneticItems() {
-        const items = document.querySelectorAll('.btn-primary, .btn-secondary, .nav-link');
-        items.forEach(item => {
-            item.addEventListener('mousemove', e => {
-                const rect = item.getBoundingClientRect();
-                const x = e.clientX - rect.left - rect.width / 2;
-                const y = e.clientY - rect.top - rect.height / 2;
-
-                item.style.transform = `translate(${x * 0.4}px, ${y * 0.4}px)`;
-            });
-            item.addEventListener('mouseleave', () => {
-                item.style.transform = `translate(0, 0)`;
+            t.addEventListener('mouseleave', () => {
+                ring.style.width = '40px';
+                ring.style.height = '40px';
+                ring.style.background = 'transparent';
+                ring.style.borderColor = 'var(--primary)';
             });
         });
     },
 
-    // Section Visibility Engine
-    scrollReactions() {
-        const sections = document.querySelectorAll('section');
-        const nav = document.querySelector('header');
-
+    reveal() {
         const observer = new IntersectionObserver(entries => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
+                    entry.target.classList.add('revealed');
                 }
             });
-        }, { threshold: 0.15 });
+        }, { threshold: 0.1 });
 
-        sections.forEach(s => observer.observe(s));
-
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > 100) nav.classList.add('scrolled');
-            else nav.classList.remove('scrolled');
-        });
+        document.querySelectorAll('[data-reveal]').forEach(el => observer.observe(el));
     },
 
-    // Parallax Depth Logic
-    parallax() {
-        const turb = document.querySelector('#liquid feTurbulence');
-        let frame = 0;
-
-        window.addEventListener('scroll', () => {
-            const scrolled = window.scrollY;
-            const blobs = document.querySelectorAll('.blob');
-
-            // Animate liquid properties on scroll
-            if (turb) {
-                turb.setAttribute('baseFrequency', `${0.01 + (scrolled * 0.00001)} ${0.01 + (scrolled * 0.00001)}`);
-            }
-
-            blobs.forEach((blob, i) => {
-                const speed = (i + 1) * 0.2;
-                blob.style.transform = `translateY(${scrolled * speed}px)`;
-            });
-
-            const heroTitle = document.querySelector('.hero-title');
-            if (heroTitle) {
-                heroTitle.style.transform = `translateY(${scrolled * 0.3}px)`;
-                heroTitle.style.opacity = 1 - (scrolled / 700);
-            }
-        });
-
-        // Continuous Physics Loop
-        const physicsLoop = () => {
-            frame += 0.005;
-            if (turb) {
-                const baseFreq = 0.01 + Math.sin(frame) * 0.002;
-                turb.setAttribute('baseFrequency', `${baseFreq} ${baseFreq}`);
-            }
-            requestAnimationFrame(physicsLoop);
-        };
-        physicsLoop();
-    },
-
-    // Smooth & Page Switching
     smoothScroll() {
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', e => {
                 e.preventDefault();
                 const target = document.querySelector(anchor.getAttribute('href'));
                 if (target) {
-                    // Trigger Transition Animation
-                    const transition = document.querySelector('.page-transition');
-                    transition.style.transformOrigin = 'bottom';
-                    transition.style.transform = 'scaleY(1)';
-
-                    setTimeout(() => {
-                        window.scrollTo({
-                            top: target.offsetTop,
-                            behavior: 'auto'
-                        });
-                        transition.style.transformOrigin = 'top';
-                        transition.style.transform = 'scaleY(0)';
-                    }, 600);
+                    window.scrollTo({
+                        top: target.offsetTop - 100,
+                        behavior: 'smooth'
+                    });
                 }
             });
         });
     },
 
-    animations() {
-        // Initial entrance
-        window.addEventListener('load', () => {
-            document.body.classList.add('loaded');
+    navbar() {
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('header');
+            if (window.scrollY > 50) {
+                header.style.padding = '0.5rem 0';
+                header.style.boxShadow = '0 10px 30px rgba(0,0,0,0.05)';
+            } else {
+                header.style.padding = '1rem 0';
+                header.style.boxShadow = 'none';
+            }
         });
     }
 };
 
-document.addEventListener('DOMContentLoaded', () => Engine.init());
+document.addEventListener('DOMContentLoaded', () => Crystal.init());
