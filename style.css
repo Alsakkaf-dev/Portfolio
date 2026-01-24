@@ -24,6 +24,31 @@ body {
     color: var(--text-dark);
     background: var(--bg-white);
     line-height: 1.6;
+    cursor: none;
+}
+
+/* Custom Glowing Cursor */
+.custom-cursor {
+    position: fixed;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.8) 0%, rgba(99, 102, 241, 0.4) 50%, transparent 70%);
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.8), 0 0 40px rgba(99, 102, 241, 0.4);
+}
+
+/* Hide custom cursor on touch devices */
+@media (hover: none) and (pointer: coarse) {
+    body {
+        cursor: auto !important;
+    }
+
+    .custom-cursor {
+        display: none;
+    }
 }
 
 .container {
@@ -156,6 +181,43 @@ body {
 .hero-image {
     display: flex;
     justify-content: center;
+    position: relative;
+}
+
+/* Wavy animated background behind photo */
+.hero-image::before {
+    content: '';
+    position: absolute;
+    width: 400px;
+    height: 400px;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+    border-radius: 50%;
+    z-index: -1;
+    animation: wave 6s ease-in-out infinite;
+}
+
+@keyframes wave {
+
+    0%,
+    100% {
+        transform: scale(1) rotate(0deg);
+        border-radius: 50% 40% 50% 40%;
+    }
+
+    25% {
+        transform: scale(1.05) rotate(5deg);
+        border-radius: 40% 50% 40% 50%;
+    }
+
+    50% {
+        transform: scale(1.1) rotate(0deg);
+        border-radius: 50% 40% 50% 40%;
+    }
+
+    75% {
+        transform: scale(1.05) rotate(-5deg);
+        border-radius: 40% 50% 40% 50%;
+    }
 }
 
 .image-wrapper {
@@ -165,6 +227,8 @@ body {
     overflow: hidden;
     border: 8px solid var(--bg-gray);
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+    position: relative;
+    z-index: 1;
 }
 
 .image-wrapper img {
