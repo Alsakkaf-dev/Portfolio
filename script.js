@@ -20,8 +20,8 @@ const Engine = {
     cursor() {
         const dot = document.querySelector('.master-cursor');
         const follower = document.querySelector('.cursor-follower');
-        
-        if(!dot || !follower) return;
+
+        if (!dot || !follower) return;
 
         let mx = 0, my = 0;
         let dx = 0, dy = 0;
@@ -71,7 +71,7 @@ const Engine = {
                 const rect = item.getBoundingClientRect();
                 const x = e.clientX - rect.left - rect.width / 2;
                 const y = e.clientY - rect.top - rect.height / 2;
-                
+
                 item.style.transform = `translate(${x * 0.4}px, ${y * 0.4}px)`;
             });
             item.addEventListener('mouseleave', () => {
@@ -87,7 +87,7 @@ const Engine = {
 
         const observer = new IntersectionObserver(entries => {
             entries.forEach(entry => {
-                if(entry.isIntersecting) {
+                if (entry.isIntersecting) {
                     entry.target.classList.add('visible');
                 }
             });
@@ -96,28 +96,47 @@ const Engine = {
         sections.forEach(s => observer.observe(s));
 
         window.addEventListener('scroll', () => {
-            if(window.scrollY > 100) nav.classList.add('scrolled');
+            if (window.scrollY > 100) nav.classList.add('scrolled');
             else nav.classList.remove('scrolled');
         });
     },
 
     // Parallax Depth Logic
     parallax() {
+        const turb = document.querySelector('#liquid feTurbulence');
+        let frame = 0;
+
         window.addEventListener('scroll', () => {
             const scrolled = window.scrollY;
             const blobs = document.querySelectorAll('.blob');
-            
+
+            // Animate liquid properties on scroll
+            if (turb) {
+                turb.setAttribute('baseFrequency', `${0.01 + (scrolled * 0.00001)} ${0.01 + (scrolled * 0.00001)}`);
+            }
+
             blobs.forEach((blob, i) => {
                 const speed = (i + 1) * 0.2;
                 blob.style.transform = `translateY(${scrolled * speed}px)`;
             });
 
             const heroTitle = document.querySelector('.hero-title');
-            if(heroTitle) {
-                heroTitle.style.transform = `translateY(${scrolled * 0.3}px)`;
+            if (heroTitle) {
+                heroTitle.style.transform = `translateY(${scrolled * 0.3}px) skewY(${scrolled * 0.02}deg)`;
                 heroTitle.style.opacity = 1 - (scrolled / 700);
             }
         });
+
+        // Continuous Physics Loop
+        const physicsLoop = () => {
+            frame += 0.005;
+            if (turb) {
+                const baseFreq = 0.01 + Math.sin(frame) * 0.002;
+                turb.setAttribute('baseFrequency', `${baseFreq} ${baseFreq}`);
+            }
+            requestAnimationFrame(physicsLoop);
+        };
+        physicsLoop();
     },
 
     // Smooth & Page Switching
@@ -126,12 +145,12 @@ const Engine = {
             anchor.addEventListener('click', e => {
                 e.preventDefault();
                 const target = document.querySelector(anchor.getAttribute('href'));
-                if(target) {
+                if (target) {
                     // Trigger Transition Animation
                     const transition = document.querySelector('.page-transition');
                     transition.style.transformOrigin = 'bottom';
                     transition.style.transform = 'scaleY(1)';
-                    
+
                     setTimeout(() => {
                         window.scrollTo({
                             top: target.offsetTop,

@@ -11,37 +11,52 @@
     --c-primary: #ffaa00;
     --c-secondary: #ff7700;
     --c-accent: #ff0055;
-    
+
     /* Dark Mode Foundations */
     --bg-deep: #050505;
     --bg-surface: #0a0a0a;
     --bg-card: rgba(20, 20, 20, 0.4);
-    
+
     /* Obsidian Glass Effect */
     --glass-bg: rgba(255, 255, 255, 0.03);
     --glass-border: rgba(255, 255, 255, 0.07);
     --glass-glow: rgba(255, 170, 0, 0.1);
-    
+
     /* Text Hierarchy */
     --t-header: #ffffff;
     --t-body: #a0a0a0;
     --t-muted: #666666;
-    
+
     /* Transitions */
     --t-smooth: cubic-bezier(0.23, 1, 0.32, 1);
     --t-liquid: cubic-bezier(0.8, 0, 0.2, 1);
-    
+
     /* Spacing */
     --container-xl: 1440px;
     --space-unit: 1rem;
 }
 
-/* === Core Resets === */
+/* === Quantum Base === */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    cursor: none !important; /* Managed by Custom Cursor */
+    cursor: none !important;
+}
+
+/* The Secret Sauce: Film Grain/Noise */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: url('https://grainy-gradients.vercel.app/noise.svg');
+    opacity: 0.05;
+    pointer-events: none;
+    z-index: 5000;
+    filter: brightness(100%);
 }
 
 body {
@@ -50,7 +65,7 @@ body {
     font-family: 'Outfit', sans-serif;
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
-    scrollbar-width: none; /* Hide scrollbar for Chrome/Safari */
+    scrollbar-width: none;
 }
 
 body::-webkit-scrollbar {
@@ -99,8 +114,13 @@ section.visible {
 }
 
 @keyframes moveBlob {
-    0% { transform: translate(-10%, -10%) scale(1); }
-    100% { transform: translate(60%, 40%) scale(1.4); }
+    0% {
+        transform: translate(-10%, -10%) scale(1);
+    }
+
+    100% {
+        transform: translate(60%, 40%) scale(1.4);
+    }
 }
 
 /* === Premium Custom Cursor === */
@@ -173,7 +193,8 @@ header.scrolled {
     transition: color 0.4s var(--t-smooth);
 }
 
-.nav-link:hover, .nav-link.active {
+.nav-link:hover,
+.nav-link.active {
     color: var(--c-primary);
 }
 
@@ -217,7 +238,9 @@ header.scrolled {
 }
 
 @keyframes slideUp {
-    to { transform: translateY(0); }
+    to {
+        transform: translateY(0);
+    }
 }
 
 /* === Interactive Cards === */
@@ -317,7 +340,15 @@ header.scrolled {
 
 /* === Responsive adjustments === */
 @media (max-width: 768px) {
-    .nav-links { display: none; }
-    .hero-title { font-size: 4rem; }
-    .grid-layout { grid-template-columns: 1fr; }
+    .nav-links {
+        display: none;
+    }
+
+    .hero-title {
+        font-size: 4rem;
+    }
+
+    .grid-layout {
+        grid-template-columns: 1fr;
+    }
 }

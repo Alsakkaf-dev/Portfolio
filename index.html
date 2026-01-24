@@ -5,16 +5,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mohammed Alsakkaf | Architect of Solutions</title>
-    <meta name="description" content="Portfolio of Mohammed Alsakkaf - Software Engineering Student specializing in precision development and aesthetic design.">
+    <meta name="description"
+        content="Portfolio of Mohammed Alsakkaf - Software Engineering Student specializing in precision development and aesthetic design.">
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
     <!-- Background Architecture -->
     <div id="liquid-bg">
-        <div class="blob" style="top: 10%; left: -5%; background: rgba(255,170,0,0.15);"></div>
-        <div class="blob" style="top: 60%; right: -10%; background: rgba(255,0,85,0.1);"></div>
+        <div class="blob" style="top: 10%; left: -5%; background: rgba(255,170,0,0.15); filter: url(#liquid);"></div>
+        <div class="blob" style="top: 60%; right: -10%; background: rgba(255,0,85,0.1); filter: url(#liquid);"></div>
     </div>
+
+    <!-- The Liquid Physics Definition -->
+    <svg style="display:none;">
+        <defs>
+            <filter id="liquid">
+                <feTurbulence type="fractalNoise" baseFrequency="0.01" numOctaves="3" result="noise" />
+                <feDisplacementMap in="SourceGraphic" in2="noise" scale="50" />
+            </filter>
+        </defs>
+    </svg>
 
     <!-- Interface Layers -->
     <div class="master-cursor"></div>
@@ -45,7 +56,8 @@
                     </h1>
                 </div>
                 <p class="hero-subtitle animate-on-load">
-                    Software Engineering student based in Malaysia. Architecting digital experiences through the lens of deep work and aesthetic integrity.
+                    Software Engineering student based in Malaysia. Architecting digital experiences through the lens of
+                    deep work and aesthetic integrity.
                 </p>
             </div>
         </section>
@@ -57,17 +69,20 @@
                     <div class="card-obsidian">
                         <span class="card-num">01</span>
                         <h3 class="hero-subtitle" style="color:#fff; margin-bottom:1rem;">THE JOURNEY</h3>
-                        <p>From Yemen to Malaysia, my path is defined by resilience and a global perspective on technology and growth.</p>
+                        <p>From Yemen to Malaysia, my path is defined by resilience and a global perspective on
+                            technology and growth.</p>
                     </div>
                     <div class="card-obsidian" style="border-color: var(--c-primary)">
                         <span class="card-num">02</span>
                         <h3 class="hero-subtitle" style="color:#fff; margin-bottom:1rem;">DEEP WORK</h3>
-                        <p>I don't just write code; I architect systems. My philosophy prioritizes depth and mastery over superficial speed.</p>
+                        <p>I don't just write code; I architect systems. My philosophy prioritizes depth and mastery
+                            over superficial speed.</p>
                     </div>
                     <div class="card-obsidian">
                         <span class="card-num">03</span>
                         <h3 class="hero-subtitle" style="color:#fff; margin-bottom:1rem;">ESTHETICS</h3>
-                        <p>A technical solution is only complete when it is beautiful. I bridge the gap between back-end logic and front-end art.</p>
+                        <p>A technical solution is only complete when it is beautiful. I bridge the gap between back-end
+                            logic and front-end art.</p>
                     </div>
                 </div>
             </div>
@@ -83,7 +98,8 @@
                         <div class="project-overlay">
                             <h3 class="hero-subtitle" style="color: #fff; font-weight: 700;">QUIZZUP PRO</h3>
                             <p style="margin-bottom: 2rem;">Learning management with gamified logic and sleek UI.</p>
-                            <a href="projects/quizzup/index.html" class="nav-link" style="color: var(--c-primary); font-weight: 800;">EXPLORE ARCHITECTURE →</a>
+                            <a href="projects/quizzup/index.html" class="nav-link"
+                                style="color: var(--c-primary); font-weight: 800;">EXPLORE ARCHITECTURE →</a>
                         </div>
                     </div>
                 </div>
@@ -92,11 +108,11 @@
 
         <!-- Logic Section -->
         <section id="philosophy">
-          <div class="container" style="text-align: center;">
-            <p class="hero-subtitle" style="max-width: 800px; margin: 0 auto; font-style: italic;">
-              "Quality over speed. Precision over haste. Excellence over shortcuts. This is the code I live by."
-            </p>
-          </div>
+            <div class="container" style="text-align: center;">
+                <p class="hero-subtitle" style="max-width: 800px; margin: 0 auto; font-style: italic;">
+                    "Quality over speed. Precision over haste. Excellence over shortcuts. This is the code I live by."
+                </p>
+            </div>
         </section>
 
         <!-- Contact -->
@@ -109,9 +125,13 @@
                     <div>
                         <form id="contact-form">
                             <input type="text" placeholder="WHO ARE YOU?" class="input-futur" required>
-                            <input type="email" placeholder="WHERE CAN I REACH YOU?" class="input-futur" required style="margin-top: 3rem;">
-                            <textarea placeholder="WHAT SHALL WE BUILD?" class="input-futur" style="margin-top: 3rem; min-height: 150px;"></textarea>
-                            <button type="submit" class="nav-link" style="background: none; border: none; font-size: 1.5rem; margin-top: 4rem; cursor: pointer; color: var(--c-primary)">SEND TRANSMISSION →</button>
+                            <input type="email" placeholder="WHERE CAN I REACH YOU?" class="input-futur" required
+                                style="margin-top: 3rem;">
+                            <textarea placeholder="WHAT SHALL WE BUILD?" class="input-futur"
+                                style="margin-top: 3rem; min-height: 150px;"></textarea>
+                            <button type="submit" class="nav-link"
+                                style="background: none; border: none; font-size: 1.5rem; margin-top: 4rem; cursor: pointer; color: var(--c-primary)">SEND
+                                TRANSMISSION →</button>
                         </form>
                     </div>
                 </div>
@@ -121,10 +141,11 @@
 
     <footer style="padding: 5vh 0; border-top: 1px solid var(--glass-border);">
         <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
-            <p style="font-size: 0.8rem; letter-spacing: 0.1em; color: var(--t-muted);">© 2026 ARCHITECTED BY MOHAMMED ALSAKKAF</p>
+            <p style="font-size: 0.8rem; letter-spacing: 0.1em; color: var(--t-muted);">© 2026 ARCHITECTED BY MOHAMMED
+                ALSAKKAF</p>
             <div style="display: flex; gap: 2rem;">
-              <a href="https://github.com/MohammedAlsakkaf2003" class="nav-link">GH</a>
-              <a href="mailto:zoer4019@gmail.com" class="nav-link">EM</a>
+                <a href="https://github.com/MohammedAlsakkaf2003" class="nav-link">GH</a>
+                <a href="mailto:zoer4019@gmail.com" class="nav-link">EM</a>
             </div>
         </div>
     </footer>
