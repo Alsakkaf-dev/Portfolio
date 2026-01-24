@@ -4,125 +4,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mohammed Alsakkaf | Software Architect</title>
+    <title>MOHAMMED AL-SAKKAF | Software Architect</title>
+    <meta name="description" content="Mohammed Al-Sakkaf - Software Engineering Student at UTM. Building digital artifacts with precision and luxury aesthetics.">
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-    <div class="main-wrapper">
-        <header class="site-header">
-            <div style="font-family: 'Space Grotesk'; font-weight: 700; font-size: 1.2rem; letter-spacing: -1px;">
-                M.ALSAKKAF<span style="color: var(--cyan);">_</span>
-            </div>
-            <nav class="nav-links">
-                <a href="#about">Dossier</a>
-                <a href="#work">Work</a>
-                <a href="mailto:alsakkaf.dev@outlook.com">Uplink</a>
-            </nav>
-        </header>
+    <div class="grid-overlay"></div>
+    <div class="cursor-follower"></div>
 
-        <main class="bento-grid">
-            <!-- Hero Card -->
-            <div class="bento-card span-2 hero-card cyan-glow">
-                <span class="tag">System Initialize</span>
-                <h1 class="card-title">Software Engineer <br>& <span style="color: var(--cyan);">Architect.</span></h1>
-                <p class="card-desc">
-                    Designing structural logic and creative digital experiences with precision. Currently forging the
-                    future at UTM.
-                </p>
-                <div class="stat-box">
-                    <div class="stat-row">
-                        <span class="stat-label">Academic Node</span>
-                        <span class="stat-val">UTM, JB</span>
+    <header class="site-header">
+        <div class="logo">M.ALSAKKAF</div>
+        <nav class="nav-links">
+            <a href="#work">Selected Work</a>
+            <a href="#about">Dossier</a>
+            <a href="mailto:alsakkaf.dev@outlook.com">Uplink</a>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="hero" id="home">
+            <div class="hero-headline">
+                <h1><span>MOHAMMED</span></h1>
+                <h1 class="line-2"><span>AL-SAKKAF</span></h1>
+            </div>
+            <p class="hero-sub">Software Engineering Student @ UTM | Year 2</p>
+        </section>
+
+        <!-- Work Section -->
+        <section class="section-work" id="work">
+            <span class="section-label">Selected Work</span>
+            <h2 class="section-title">DIGITAL ARTIFACTS</h2>
+
+            <a href="projects/quizzup/index.html" style="text-decoration: none; color: inherit;">
+                <div class="project-card">
+                    <div class="project-mockup">
+                        <div class="mockup-content">
+                            <span>PREVIEW</span>
+                        </div>
                     </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Semester Progress</span>
-                        <span class="stat-val">Year 2, Sem 4</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Portrait Card -->
-            <div class="bento-card row-2 purple-glow">
-                <div class="portrait-container"></div>
-                <div style="margin-top: 1.5rem;">
-                    <span class="tag" style="color: var(--purple);">Identity</span>
-                    <h3 style="font-family: 'Space Grotesk';">Mohammed Alsakkaf</h3>
-                    <p style="font-size: 0.8rem; color: var(--text-dim);">Born in Yemen. Raised in KSA. Scaled in
-                        Malaysia.</p>
-                </div>
-            </div>
-
-            <!-- Skills Card -->
-            <div class="bento-card">
-                <span class="tag">Core Logic</span>
-                <h3 style="font-family: 'Space Grotesk'; margin-bottom: 1rem;">Tech Stack</h3>
-                <div style="display: flex; wrap: wrap;">
-                    <span class="skill-pill">C++</span>
-                    <span class="skill-pill">HTML5</span>
-                    <span class="skill-pill">CSS3</span>
-                    <span class="skill-pill">JS</span>
-                    <span class="skill-pill">System Architecture</span>
-                </div>
-            </div>
-
-            <!-- History Card -->
-            <div class="bento-card span-2 purple-glow">
-                <span class="tag" style="color: var(--purple);">Trajectory Log</span>
-                <div class="experience-list">
-                    <div class="exp-item">
-                        <span class="exp-date">2023 - Present</span>
-                        <p class="exp-title">Universiti Teknologi Malaysia</p>
-                        <p class="card-desc">Bachelor of Software Engineering. Focused on algorithm optimization and
-                            structural UI.</p>
-                    </div>
-                    <div class="exp-item">
-                        <span class="exp-date">2008 - 2023</span>
-                        <p class="exp-title">Saudi Arabia Foundation</p>
-                        <p class="card-desc">Developed a detail-oriented mindset and creative problem-solving skills
-                            over 15 years.</p>
+                    <div class="project-info">
+                        <h3>QUIZZUP PRO</h3>
+                        <p>Logic-Driven Quiz Engine — 2024</p>
                     </div>
                 </div>
-            </div>
+            </a>
+        </section>
 
-            <!-- Project Card -->
-            <div class="bento-card span-2 cyan-glow" id="work">
-                <span class="tag">Deployed Units</span>
-                <h2 class="card-title">QuizzUp Pro.</h2>
-                <p class="card-desc">A premium quiz application engine with sophisticated state management and logic.
-                </p>
-                <a href="projects/quizzup/index.html" class="project-link">
-                    <span>Access Deployed Asset</span>
-                    <span>→</span>
-                </a>
+        <!-- About/Stats Section -->
+        <section class="section-stats" id="about">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <h4>Identity</h4>
+                    <p>Born in Yemen. Raised in KSA. Scaled in Malaysia.</p>
+                </div>
+                <div class="stat-item">
+                    <h4>Academic Node</h4>
+                    <p>Universiti Teknologi Malaysia (UTM), JB</p>
+                </div>
+                <div class="stat-item">
+                    <h4>Core Logic</h4>
+                    <p>C++, HTML5, CSS3, JS, System Architecture</p>
+                </div>
             </div>
+        </section>
+    </main>
 
-            <!-- Work Style Card -->
-            <div class="bento-card">
-                <span class="tag">Methodology</span>
-                <h3 style="font-family: 'Space Grotesk'; margin-bottom: 0.5rem;">The Step-By-Step</h3>
-                <p class="card-desc" style="font-size: 0.8rem;">
-                    Strict adherence to structural integrity. Full understanding before execution. Absolute precision in
-                    aesthetics.
-                </p>
-            </div>
-
-            <!-- Contact Card -->
-            <div class="bento-card cyan-glow">
-                <span class="tag">Communication</span>
-                <h3 style="font-family: 'Space Grotesk';">Establish Uplink</h3>
-                <p class="card-desc" style="font-size: 0.8rem; margin-bottom: 1.5rem;">Open for collaboration on
-                    high-end engineering projects.</p>
-                <a href="mailto:alsakkaf.dev@outlook.com"
-                    style="color: var(--cyan); font-weight: 700; text-decoration: none;">TRANSMIT_EMAIL →</a>
-            </div>
-        </main>
-
-        <footer
-            style="margin-top: 4rem; padding: 2rem 0; border-top: 1px solid var(--border); text-align: center; color: var(--text-dim); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px;">
+    <footer>
+        <span class="section-label">Establish Uplink</span>
+        <a href="mailto:alsakkaf.dev@outlook.com" class="footer-email">alsakkaf.dev@outlook.com</a>
+        <div class="footer-copy">
             © 2026 ARCHITECTED BY MOHAMMED ALSAKKAF // CORE_STATUS: ONLINE
-        </footer>
-    </div>
+        </div>
+    </footer>
 
     <script src="script.js"></script>
 </body>

@@ -1,75 +1,52 @@
-/**
- * BENTO ARCHITECT ENGINE v6.0
- * Pure interaction, Zero cursor lag.
- */
+document.addEventListener('DOMContentLoaded', () => {
+    const cursor = document.querySelector('.cursor-follower');
+    const heroHeadline = document.querySelector('.hero-headline');
+    const projectCards = document.querySelectorAll('.project-card');
 
-'use strict';
+    // Custom Cursor Movement
+    document.addEventListener('mousemove', (e) => {
+        cursor.style.left = e.clientX + 'px';
+        cursor.style.top = e.clientY + 'px';
+    });
 
-const Architect = {
-    init() {
-        this.revealOnScroll();
-        this.magneticInteraction();
-        console.log("%c BENTO ARCHITECT ONLINE ", "background: #00f2ff; color: #000; font-weight: bold; padding: 4px;");
-    },
+    // Cursor Hover Effects
+    const interactiveElements = document.querySelectorAll('a, button, .project-card');
+    interactiveElements.forEach(el => {
+        el.addEventListener('mouseenter', () => cursor.classList.add('hovered'));
+        el.addEventListener('mouseleave', () => cursor.classList.remove('hovered'));
+    });
 
-    /**
-     * Subtle staggered reveal for bento cards
-     */
-    revealOnScroll() {
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
-        };
+    // Hero Tilt Effect
+    document.addEventListener('mousemove', (e) => {
+        const { clientX, clientY } = e;
+        const centerX = window.innerWidth / 2;
+        const centerY = window.innerHeight / 2;
+        
+        const moveX = (clientX - centerX) / 50;
+        const moveY = (clientY - centerY) / 50;
 
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach((entry, index) => {
-                if (entry.isIntersecting) {
-                    // Delay reveal based on current visibility to create stagger
-                    setTimeout(() => {
-                        entry.target.style.opacity = '1';
-                        entry.target.style.transform = 'translateY(0)';
-                    }, index * 50);
-                    observer.unobserve(entry.target);
-                }
-            });
-        }, observerOptions);
+        heroHeadline.style.transform = `rotateX(${-moveY}deg) rotateY(${moveX}deg)`;
+    });
 
-        const cards = document.querySelectorAll('.bento-card');
-        cards.forEach(card => {
-            card.style.opacity = '0';
-            card.style.transform = 'translateY(20px)';
-            card.style.transition = 'all 0.6s cubic-bezier(0.23, 1, 0.32, 1)';
-            observer.observe(card);
+    // Smooth reveal on scroll
+    const observerOptions = {
+        threshold: 0.1
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
         });
-    },
+    }, observerOptions);
 
-    /**
-     * Subtle light tilt effect on hover for high-end feel
-     * (Not a cursor, just card reaction)
-     */
-    magneticInteraction() {
-        const cards = document.querySelectorAll('.bento-card');
-
-        cards.forEach(card => {
-            card.addEventListener('mousemove', e => {
-                const rect = card.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-
-                const centerX = rect.width / 2;
-                const centerY = rect.height / 2;
-
-                const rotateX = (y - centerY) / 50;
-                const rotateY = (centerX - x) / 50;
-
-                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-5px)`;
-            });
-
-            card.addEventListener('mouseleave', () => {
-                card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0)`;
-            });
-        });
-    }
-};
-
-document.addEventListener('DOMContentLoaded', () => Architect.init());
+    const revealElements = document.querySelectorAll('.project-card, .stat-item');
+    revealElements.forEach(el => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(50px)';
+        el.style.transition = 'all 1s cubic-bezier(0.16, 1, 0.3, 1)';
+        observer.observe(el);
+    });
+});
