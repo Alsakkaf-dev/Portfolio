@@ -122,7 +122,7 @@ const Engine = {
 
             const heroTitle = document.querySelector('.hero-title');
             if (heroTitle) {
-                heroTitle.style.transform = `translateY(${scrolled * 0.3}px) skewY(${scrolled * 0.02}deg)`;
+                heroTitle.style.transform = `translateY(${scrolled * 0.3}px)`;
                 heroTitle.style.opacity = 1 - (scrolled / 700);
             }
         });
