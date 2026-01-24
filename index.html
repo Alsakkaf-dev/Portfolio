@@ -4,360 +4,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mohammed Alsakkaf | Software Engineering Portfolio</title>
+    <title>Mohammed Alsakkaf | Architect of Solutions</title>
+    <meta name="description" content="Portfolio of Mohammed Alsakkaf - Software Engineering Student specializing in precision development and aesthetic design.">
     <link rel="stylesheet" href="style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap"
-        rel="stylesheet">
 </head>
 
 <body>
-    <!-- Navigation -->
+    <!-- Background Architecture -->
+    <div id="liquid-bg">
+        <div class="blob" style="top: 10%; left: -5%; background: rgba(255,170,0,0.15);"></div>
+        <div class="blob" style="top: 60%; right: -10%; background: rgba(255,0,85,0.1);"></div>
+    </div>
+
+    <!-- Interface Layers -->
+    <div class="master-cursor"></div>
+    <div class="cursor-follower"></div>
+    <div class="page-transition"></div>
+
     <header>
-        <nav class="nav-bar">
-            <div class="nav-container">
-                <div class="logo">Mohammed Alsakkaf</div>
-                <div class="nav-links">
-                    <a href="#about">About</a>
-                    <a href="#philosophy">Philosophy</a>
-                    <a href="#projects">Projects</a>
-                    <a href="#contact">Contact</a>
-                </div>
-            </div>
-        </nav>
+        <div class="container nav-grid">
+            <div class="logo">M.AL_SAKKAF</div>
+            <nav class="nav-links">
+                <a href="#about" class="nav-link">Vision</a>
+                <a href="#projects" class="nav-link">Projects</a>
+                <a href="#philosophy" class="nav-link">Logic</a>
+                <a href="#contact" class="nav-link">Connect</a>
+            </nav>
+        </div>
     </header>
 
     <main>
-        <!-- Hero Section -->
+        <!-- Hero: The Statement -->
         <section class="hero">
-            <div class="hero-content">
-                <div class="hero-label">Software Engineering Student</div>
-                <h1 class="hero-title">Building Solutions with<br><span class="gradient-text">Precision & Purpose</span>
-                </h1>
-                <p class="hero-subtitle">A journey from Yemen to Malaysia, driven by resilience, deep work, and a
-                    commitment
-                    to excellence in software engineering.</p>
-                <div class="hero-cta">
-                    <a href="#projects" class="btn-primary">View My Work</a>
-                    <a href="#about" class="btn-secondary">Learn More</a>
+            <div class="container">
+                <div class="hero-mask">
+                    <h1 class="hero-title">
+                        <span class="split-line">PRECISION</span>
+                        <span class="split-line">MEETS</span>
+                        <span class="split-line" style="color: var(--c-primary)">PURPOSE.</span>
+                    </h1>
                 </div>
-            </div>
-            <div class="hero-visual">
-                <div class="profile-photo-container">
-                    <img src="assets/images/profile.jpg" alt="Mohammed Alsakkaf" class="profile-photo">
-                </div>
-                <div class="floating-card card-1">
-                    <div class="card-icon" aria-hidden="true">🎓</div>
-                    <div class="card-text">Software Engineering</div>
-                </div>
-                <div class="floating-card card-2">
-                    <div class="card-icon" aria-hidden="true">🌍</div>
-                    <div class="card-text">Yemen → Malaysia</div>
-                </div>
-                <div class="floating-card card-3">
-                    <div class="card-icon" aria-hidden="true">💡</div>
-                    <div class="card-text">Deep Work Philosophy</div>
-                </div>
+                <p class="hero-subtitle animate-on-load">
+                    Software Engineering student based in Malaysia. Architecting digital experiences through the lens of deep work and aesthetic integrity.
+                </p>
             </div>
         </section>
 
-        <!-- About Section -->
-        <section id="about" class="about-section">
+        <!-- Vision -->
+        <section id="about">
             <div class="container">
-                <div class="section-header">
-                    <span class="section-label">Who I Am</span>
-                    <h2 class="section-title">The Journey of Mohammed Alsakkaf</h2>
-                </div>
-
-                <div class="about-grid">
-                    <div class="about-card">
-                        <div class="about-icon" aria-hidden="true">🌟</div>
-                        <h3>A Dedication to Growth</h3>
-                        <p>Mohammed Alsakkaf is a resilient and ambitious software engineering student whose journey
-                            spans
-                            across borders. Originally from Yemen, he made the significant decision to pursue his higher
-                            education in Malaysia, a move that reflects his determination to seek out the best
-                            opportunities
-                            for his future. Now based in Johor Bahru, he is building a life defined by academic
-                            curiosity
-                            and cultural adaptability.</p>
+                <div class="grid-layout">
+                    <div class="card-obsidian">
+                        <span class="card-num">01</span>
+                        <h3 class="hero-subtitle" style="color:#fff; margin-bottom:1rem;">THE JOURNEY</h3>
+                        <p>From Yemen to Malaysia, my path is defined by resilience and a global perspective on technology and growth.</p>
                     </div>
-
-                    <div class="about-card">
-                        <div class="about-icon" aria-hidden="true">📚</div>
-                        <h3>Philosophy of Learning</h3>
-                        <p>What sets Mohammed apart is not just what he studies, but how he studies. He is a believer in
-                            the
-                            power of "deep work." Rather than rushing through concepts, he adopts a disciplined,
-                            step-by-step methodology. He values clarity and precision above all else, ensuring that he
-                            fully
-                            masters one level of understanding before ascending to the next. This patient approach
-                            demonstrates a high level of integrity and a refusal to settle for superficial knowledge.
-                        </p>
+                    <div class="card-obsidian" style="border-color: var(--c-primary)">
+                        <span class="card-num">02</span>
+                        <h3 class="hero-subtitle" style="color:#fff; margin-bottom:1rem;">DEEP WORK</h3>
+                        <p>I don't just write code; I architect systems. My philosophy prioritizes depth and mastery over superficial speed.</p>
                     </div>
-
-                    <div class="about-card">
-                        <div class="about-icon" aria-hidden="true">🎨</div>
-                        <h3>Creativity & Precision</h3>
-                        <p>Beyond the logic of engineering, Mohammed possesses a distinct appreciation for aesthetics
-                            and
-                            structure. He believes that technical solutions should not only function well but be
-                            presented
-                            with beauty and organization. This blend of creative vision and structured thinking allows
-                            him
-                            to see projects holistically—valuing both the hidden logic and the visible presentation.</p>
+                    <div class="card-obsidian">
+                        <span class="card-num">03</span>
+                        <h3 class="hero-subtitle" style="color:#fff; margin-bottom:1rem;">ESTHETICS</h3>
+                        <p>A technical solution is only complete when it is beautiful. I bridge the gap between back-end logic and front-end art.</p>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Philosophy Section -->
-        <section id="philosophy" class="philosophy-section">
+        <!-- Projects -->
+        <section id="projects">
             <div class="container">
-                <div class="philosophy-content">
-                    <div class="philosophy-text">
-                        <span class="section-label">My Approach</span>
-                        <h2 class="section-title">Quality Over Speed</h2>
-                        <p class="philosophy-quote">"I am Mohammed Alsakkaf, a Software Engineering undergraduate with a
-                            global perspective. My journey from Yemen to Malaysia has taught me the value of resilience
-                            and
-                            adaptation. In my work and studies, I am defined by a 'quality-first' mindset: I prioritize
-                            organized, step-by-step learning to ensure that my foundation is solid. I am passionate
-                            about
-                            combining technical logic with creative design to build solutions that are not only
-                            effective
-                            but also clear and well-structured."</p>
-
-                        <div class="philosophy-principles">
-                            <div class="principle-item">
-                                <div class="principle-number">01</div>
-                                <div class="principle-content">
-                                    <h4>Deep Work Methodology</h4>
-                                    <p>Focused, undistracted learning that builds true mastery</p>
-                                </div>
-                            </div>
-                            <div class="principle-item">
-                                <div class="principle-number">02</div>
-                                <div class="principle-content">
-                                    <h4>Step-by-Step Precision</h4>
-                                    <p>Each concept fully understood before moving forward</p>
-                                </div>
-                            </div>
-                            <div class="principle-item">
-                                <div class="principle-number">03</div>
-                                <div class="principle-content">
-                                    <h4>Aesthetic Engineering</h4>
-                                    <p>Solutions that are both functional and beautifully designed</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="philosophy-visual">
-                        <div class="stats-grid">
-                            <div class="stat-card">
-                                <div class="stat-value">2+</div>
-                                <div class="stat-label">Years of Study</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-value">100%</div>
-                                <div class="stat-label">Commitment</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-value">∞</div>
-                                <div class="stat-label">Growth Mindset</div>
-                            </div>
+                <h2 class="hero-title" style="font-size: 3rem; margin-bottom: 4rem;">SELECTED WORK</h2>
+                <div class="grid-layout">
+                    <div class="project-reveal">
+                        <img src="assets/images/quizzup-preview.png" alt="QuizzUp" class="project-img">
+                        <div class="project-overlay">
+                            <h3 class="hero-subtitle" style="color: #fff; font-weight: 700;">QUIZZUP PRO</h3>
+                            <p style="margin-bottom: 2rem;">Learning management with gamified logic and sleek UI.</p>
+                            <a href="projects/quizzup/index.html" class="nav-link" style="color: var(--c-primary); font-weight: 800;">EXPLORE ARCHITECTURE →</a>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Projects Section -->
-        <section id="projects" class="projects-section">
-            <div class="container">
-                <div class="section-header">
-                    <span class="section-label">Featured Work</span>
-                    <h2 class="section-title">Project Showcase</h2>
-                    <p class="section-description">A demonstration of technical capability, design thinking, and
-                        problem-solving</p>
-                </div>
-
-                <!-- QuizzUp Case Study -->
-                <div class="project-showcase">
-                    <div class="project-preview">
-                        <div class="browser-mockup">
-                            <div class="browser-header">
-                                <div class="browser-dots">
-                                    <span></span>
-                                    <span></span>
-                                    <span></span>
-                                </div>
-                                <div class="browser-url">quizzup-pro.local</div>
-                            </div>
-                            <div class="browser-content">
-                                <img src="assets/images/quizzup-preview.png" alt="QuizzUp Platform Preview"
-                                    onerror="this.style.background='linear-gradient(135deg, #667eea 0%, #764ba2 100%)'">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="project-details">
-                        <div class="project-tag">Full-Stack Development</div>
-                        <h3 class="project-title">QuizzUp: Premium Learning Platform</h3>
-                        <p class="project-description">A comprehensive quiz and learning management system designed for
-                            academic excellence. Built with modern web technologies and a focus on user experience, this
-                            platform demonstrates full-stack capabilities and attention to detail.</p>
-
-                        <div class="project-story">
-                            <h4>The Story Behind the Project</h4>
-                            <p>QuizzUp was born from a need to create an engaging, competitive learning environment for
-                                students. The challenge was to build a system that not only tests knowledge but also
-                                motivates continuous learning through gamification, leaderboards, and real-time
-                                feedback.
-                            </p>
-
-                            <p>The development process followed my core philosophy: step-by-step precision. Each feature
-                                was
-                                carefully planned, implemented, and refined to ensure both functionality and aesthetic
-                                appeal. From the glassmorphic UI design to the admin panel for content management, every
-                                element was crafted with purpose.</p>
-                        </div>
-
-                        <div class="tech-stack">
-                            <h4>Technology Stack</h4>
-                            <div class="tech-tags">
-                                <span class="tech-tag">HTML5</span>
-                                <span class="tech-tag">CSS3</span>
-                                <span class="tech-tag">JavaScript</span>
-                                <span class="tech-tag">LocalStorage API</span>
-                                <span class="tech-tag">Responsive Design</span>
-                                <span class="tech-tag">Glassmorphism</span>
-                            </div>
-                        </div>
-
-                        <div class="project-features">
-                            <h4>Key Features</h4>
-                            <ul class="features-list">
-                                <li>
-                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                                        <path
-                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                            fill="currentColor" />
-                                    </svg>
-                                    <span>Dynamic quiz generation with multiple question types (MCQ, True/False)</span>
-                                </li>
-                                <li>
-                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                                        <path
-                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                            fill="currentColor" />
-                                    </svg>
-                                    <span>Real-time leaderboard with ranking system and point tracking</span>
-                                </li>
-                                <li>
-                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                                        <path
-                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                            fill="currentColor" />
-                                    </svg>
-                                    <span>Comprehensive admin panel for content and user management</span>
-                                </li>
-                                <li>
-                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                                        <path
-                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                            fill="currentColor" />
-                                    </svg>
-                                    <span>Advanced search and filtering with real-time highlighting</span>
-                                </li>
-                                <li>
-                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                                        <path
-                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                            fill="currentColor" />
-                                    </svg>
-                                    <span>Responsive design with premium glassmorphism aesthetics</span>
-                                </li>
-                                <li>
-                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                                        <path
-                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                            fill="currentColor" />
-                                    </svg>
-                                    <span>User authentication and profile management system</span>
-                                </li>
-                            </ul>
-                        </div>
-
-                        <div class="project-links">
-                            <a href="projects/quizzup/index.html" class="btn-primary" target="_blank">
-                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                                    <path d="M10 3a7 7 0 100 14 7 7 0 000-14zm0 12a5 5 0 110-10 5 5 0 010 10z"
-                                        fill="currentColor" />
-                                </svg>
-                                View Live Project
-                            </a>
-                            <a href="#contact" class="btn-secondary">Discuss This Project</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <!-- Logic Section -->
+        <section id="philosophy">
+          <div class="container" style="text-align: center;">
+            <p class="hero-subtitle" style="max-width: 800px; margin: 0 auto; font-style: italic;">
+              "Quality over speed. Precision over haste. Excellence over shortcuts. This is the code I live by."
+            </p>
+          </div>
         </section>
 
-        <!-- Contact Section -->
-        <section id="contact" class="contact-section">
+        <!-- Contact -->
+        <section id="contact">
             <div class="container">
-                <div class="contact-content">
-                    <div class="contact-info">
-                        <span class="section-label">Get In Touch</span>
-                        <h2 class="section-title">Let's Build Something Great</h2>
-                        <p class="contact-description">I'm always open to discussing new projects, creative ideas, or
-                            opportunities to be part of your vision. Whether you're looking for a dedicated developer or
-                            want to collaborate on something innovative, I'd love to hear from you.</p>
-
-                        <div class="contact-details">
-                            <div class="contact-item">
-                                <div class="contact-icon" aria-hidden="true">📍</div>
-                                <div class="contact-text">
-                                    <div class="contact-label">Location</div>
-                                    <div class="contact-value">Johor Bahru, Malaysia</div>
-                                </div>
-                            </div>
-                            <div class="contact-item">
-                                <div class="contact-icon" aria-hidden="true">🎓</div>
-                                <div class="contact-text">
-                                    <div class="contact-label">Education</div>
-                                    <div class="contact-value">Software Engineering Student</div>
-                                </div>
-                            </div>
-                            <div class="contact-item">
-                                <div class="contact-icon" aria-hidden="true">🌍</div>
-                                <div class="contact-text">
-                                    <div class="contact-label">Origin</div>
-                                    <div class="contact-value">Yemen</div>
-                                </div>
-                            </div>
-                        </div>
+                <div class="grid-layout">
+                    <div>
+                        <h2 class="hero-title" style="font-size: 4rem;">LET'S START THE DIALOGUE.</h2>
                     </div>
-
-                    <div class="contact-form-container">
-                        <form class="contact-form" id="contact-form">
-                            <div class="form-group">
-                                <label for="name">Your Name</label>
-                                <input type="text" id="name" name="name" required placeholder="John Doe">
-                            </div>
-                            <div class="form-group">
-                                <label for="email">Email Address</label>
-                                <input type="email" id="email" name="email" required placeholder="john@example.com">
-                            </div>
-                            <div class="form-group">
-                                <label for="message">Message</label>
-                                <textarea id="message" name="message" rows="5" required
-                                    placeholder="Tell me about your project or idea..."></textarea>
-                            </div>
-                            <button type="submit" class="btn-primary btn-full">Send Message</button>
+                    <div>
+                        <form id="contact-form">
+                            <input type="text" placeholder="WHO ARE YOU?" class="input-futur" required>
+                            <input type="email" placeholder="WHERE CAN I REACH YOU?" class="input-futur" required style="margin-top: 3rem;">
+                            <textarea placeholder="WHAT SHALL WE BUILD?" class="input-futur" style="margin-top: 3rem; min-height: 150px;"></textarea>
+                            <button type="submit" class="nav-link" style="background: none; border: none; font-size: 1.5rem; margin-top: 4rem; cursor: pointer; color: var(--c-primary)">SEND TRANSMISSION →</button>
                         </form>
                     </div>
                 </div>
@@ -365,57 +119,12 @@
         </section>
     </main>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-brand">
-                    <div class="footer-logo">Mohammed Alsakkaf</div>
-                    <p class="footer-tagline">Building the future, one line of code at a time.</p>
-                    <div class="social-links">
-                        <a href="https://github.com/MohammedAlsakkaf2003" target="_blank" rel="noopener"
-                            title="GitHub">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                                <path
-                                    d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
-                            </svg>
-                        </a>
-                        <a href="https://twitter.com/sgfmohammed" target="_blank" rel="noopener" title="Twitter">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                                <path
-                                    d="M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2c9 5 20 0 20-11.5a4.5 4.5 0 00-.08-.83A7.72 7.72 0 0023 3z" />
-                            </svg>
-                        </a>
-                        <a href="https://dev.to/mohammed_alsakkaf_958117d" target="_blank" rel="noopener"
-                            title="Dev.to">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                                <path
-                                    d="M7.42 10.05c-.18-.16-.46-.23-.84-.23H6l.02 2.44.04 2.45.56-.02c.41 0 .63-.07.83-.26.24-.24.26-.36.26-2.2 0-1.91-.02-1.96-.29-2.18zM0 4.94v14.12h24V4.94H0zM8.56 15.3c-.44.58-1.06.77-2.53.77H4.71V8.53h1.4c1.67 0 2.16.18 2.6.9.27.43.29.6.32 2.57.05 2.23-.02 2.73-.47 3.3zm5.09-5.47h-2.47v1.77h1.52v1.28l-.72.04-.75.03v1.77l1.22.03 1.2.04v1.28h-1.6c-1.53 0-1.6-.01-1.87-.3l-.3-.28v-3.16c0-3.02.01-3.18.25-3.48.23-.31.25-.31 1.88-.31h1.64v1.3zm4.68 5.45c-.17.43-.64.79-1 .79-.18 0-.45-.15-.67-.39-.32-.32-.45-.63-.82-2.08l-.9-3.39-.45-1.67h.76c.4 0 .75.02.75.05 0 .06 1.16 4.54 1.26 4.83.04.15.32-.7.73-2.3l.66-2.52.74-.04c.4-.02.73 0 .73.04 0 .14-1.67 6.38-1.8 6.68z" />
-                            </svg>
-                        </a>
-                        <a href="https://discord.gg/bjsqee990" target="_blank" rel="noopener" title="Discord">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                                <path
-                                    d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 00-5.487 0 12.64 12.64 0 00-.617-1.25.077.077 0 00-.079-.037A19.736 19.736 0 003.677 4.37a.07.07 0 00-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 00.031.057 19.9 19.9 0 005.993 3.03.078.078 0 00.084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 00-.041-.106 13.107 13.107 0 01-1.872-.892.077.077 0 01-.008-.128 10.2 10.2 0 00.372-.292.074.074 0 01.077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 01.078.01c.12.098.246.198.373.292a.077.077 0 01-.006.127 12.299 12.299 0 01-1.873.892.077.077 0 00-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 00.084.028 19.839 19.839 0 006.002-3.03.077.077 0 00.032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 00-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" />
-                            </svg>
-                        </a>
-                        <a href="mailto:zoer4019@gmail.com" title="Email">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z">
-                                </path>
-                                <polyline points="22,6 12,13 2,6"></polyline>
-                            </svg>
-                        </a>
-                    </div>
-                </div>
-                <div class="footer-quote">
-                    <p>"Quality over speed. Precision over haste. Excellence over shortcuts."</p>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; 2026 Mohammed Alsakkaf. All rights reserved.</p>
-                <p>Designed with precision and purpose.</p>
+    <footer style="padding: 5vh 0; border-top: 1px solid var(--glass-border);">
+        <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
+            <p style="font-size: 0.8rem; letter-spacing: 0.1em; color: var(--t-muted);">© 2026 ARCHITECTED BY MOHAMMED ALSAKKAF</p>
+            <div style="display: flex; gap: 2rem;">
+              <a href="https://github.com/MohammedAlsakkaf2003" class="nav-link">GH</a>
+              <a href="mailto:zoer4019@gmail.com" class="nav-link">EM</a>
             </div>
         </div>
     </footer>
