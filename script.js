@@ -1,105 +1,139 @@
 /**
- * CRYSTAL ENGINE v1.0
- * High-performance, clean interaction controller
+ * THE NEON ARCHITECT ENGINE v3.0
+ * Mohammed Alsakkaf - Advanced Interaction Controller
  */
 
 'use strict';
 
-const Crystal = {
+const Engine = {
     init() {
         this.cursor();
-        this.reveal();
-        this.smoothScroll();
-        this.navbar();
-        console.log("%c CRYSTAL UI LOADED ", "background: #4f46e5; color: #fff; font-weight: bold; padding: 4px;");
+        this.navIntersection();
+        this.revealOnScroll();
+        this.magneticButtons();
+        this.auraTracking();
+        console.log("%c NEON ARCHITECT ENGINE LOADED ", "background: #9d50bb; color: #fff; font-weight: bold; padding: 4px;");
     },
 
+    // Ultra-Smooth Dual Cursor
     cursor() {
-        const dot = document.querySelector('.cursor-dot');
-        const ring = document.querySelector('.cursor-ring');
+        const dot = document.querySelector('.c-dot');
+        const circle = document.querySelector('.c-circle');
+        if (!dot || !circle) return;
 
-        let mouse = { x: 0, y: 0 };
-        let dotPos = { x: 0, y: 0 };
-        let ringPos = { x: 0, y: 0 };
+        let mx = 0, my = 0;
+        let dx = 0, dy = 0;
+        let cx = 0, cy = 0;
 
         window.addEventListener('mousemove', e => {
-            mouse.x = e.clientX;
-            mouse.y = e.clientY;
+            mx = e.clientX;
+            my = e.clientY;
         });
 
         const tick = () => {
-            // Smooth lerping
-            dotPos.x += (mouse.x - dotPos.x) * 0.2;
-            dotPos.y += (mouse.y - dotPos.y) * 0.2;
+            // Speed for dot
+            dx += (mx - dx) * 0.25;
+            dy += (my - dy) * 0.25;
+            dot.style.transform = `translate(${dx - 5}px, ${dy - 5}px)`;
 
-            ringPos.x += (mouse.x - ringPos.x) * 0.1;
-            ringPos.y += (mouse.y - ringPos.y) * 0.1;
-
-            if (dot) dot.style.transform = `translate(${dotPos.x - 4}px, ${dotPos.y - 4}px)`;
-            if (ring) ring.style.transform = `translate(${ringPos.x - 20}px, ${ringPos.y - 20}px)`;
+            // Slower speed for circle (trailing effect)
+            cx += (mx - cx) * 0.12;
+            cy += (my - cy) * 0.12;
+            circle.style.transform = `translate(${cx - 20}px, ${cy - 20}px)`;
 
             requestAnimationFrame(tick);
         };
         tick();
 
-        // Hover states
-        const targets = document.querySelectorAll('a, button, .card, .project-card');
-        targets.forEach(t => {
-            t.addEventListener('mouseenter', () => {
-                ring.style.width = '60px';
-                ring.style.height = '60px';
-                ring.style.transform = `translate(${ringPos.x - 30}px, ${ringPos.y - 30}px)`;
-                ring.style.background = 'rgba(79, 70, 229, 0.1)';
-                ring.style.borderColor = 'transparent';
+        // Hover expansions
+        document.querySelectorAll('a, button, .neo-btn, .timeline-card, .skill-box').forEach(el => {
+            el.addEventListener('mouseenter', () => {
+                circle.style.width = '70px';
+                circle.style.height = '70px';
+                circle.style.transform = `translate(${cx - 35}px, ${cy - 35}px)`;
+                circle.style.background = 'rgba(157, 80, 187, 0.1)';
+                circle.style.borderColor = 'transparent';
             });
-            t.addEventListener('mouseleave', () => {
-                ring.style.width = '40px';
-                ring.style.height = '40px';
-                ring.style.background = 'transparent';
-                ring.style.borderColor = 'var(--primary)';
+            el.addEventListener('mouseleave', () => {
+                circle.style.width = '40px';
+                circle.style.height = '40px';
+                circle.style.background = 'transparent';
+                circle.style.borderColor = 'var(--acc-purple)';
             });
         });
     },
 
-    reveal() {
+    // Floating Nav Highlight
+    navIntersection() {
+        const links = document.querySelectorAll('.nav-link');
+        const sections = document.querySelectorAll('section');
+
         const observer = new IntersectionObserver(entries => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
-                    entry.target.classList.add('revealed');
+                    links.forEach(link => {
+                        link.classList.remove('active');
+                        if (link.getAttribute('href').substring(1) === entry.target.id) {
+                            link.classList.add('active');
+                        }
+                    });
+                }
+            });
+        }, { threshold: 0.5 });
+
+        sections.forEach(s => observer.observe(s));
+    },
+
+    // Reveal Animations
+    revealOnScroll() {
+        const elements = document.querySelectorAll('.timeline-item, .skill-box, .about-box, .hero-massive-title, .hero-desc');
+
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
                 }
             });
         }, { threshold: 0.1 });
 
-        document.querySelectorAll('[data-reveal]').forEach(el => observer.observe(el));
-    },
-
-    smoothScroll() {
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', e => {
-                e.preventDefault();
-                const target = document.querySelector(anchor.getAttribute('href'));
-                if (target) {
-                    window.scrollTo({
-                        top: target.offsetTop - 100,
-                        behavior: 'smooth'
-                    });
-                }
-            });
+        elements.forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(40px)';
+            el.style.transition = 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+            observer.observe(el);
         });
     },
 
-    navbar() {
-        window.addEventListener('scroll', () => {
-            const header = document.querySelector('header');
-            if (window.scrollY > 50) {
-                header.style.padding = '0.5rem 0';
-                header.style.boxShadow = '0 10px 30px rgba(0,0,0,0.05)';
-            } else {
-                header.style.padding = '1rem 0';
-                header.style.boxShadow = 'none';
-            }
+    // Aura Mouse Tracking (Moves glows with mouse)
+    auraTracking() {
+        const purple = document.querySelector('.aura-purple');
+        const green = document.querySelector('.aura-green');
+
+        window.addEventListener('mousemove', e => {
+            const x = e.clientX;
+            const y = e.clientY;
+
+            if (purple) purple.style.transform = `translate(${x * 0.05}px, ${y * 0.05}px)`;
+            if (green) green.style.transform = `translate(${x * -0.05}px, ${y * -0.05}px)`;
+        });
+    },
+
+    magneticButtons() {
+        const btns = document.querySelectorAll('.neo-btn');
+        btns.forEach(btn => {
+            btn.addEventListener('mousemove', e => {
+                const rect = btn.getBoundingClientRect();
+                const x = e.clientX - rect.left - rect.width / 2;
+                const y = e.clientY - rect.top - rect.height / 2;
+
+                btn.style.transform = `translate(${x * 0.3}px, ${y * 0.3}px)`;
+            });
+            btn.addEventListener('mouseleave', () => {
+                btn.style.transform = `translate(0, 0)`;
+            });
         });
     }
 };
 
-document.addEventListener('DOMContentLoaded', () => Crystal.init());
+document.addEventListener('DOMContentLoaded', () => Engine.init());
