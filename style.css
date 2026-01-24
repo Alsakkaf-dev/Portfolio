@@ -300,11 +300,17 @@ section {
     font-size: 1.5rem;
     font-weight: 700;
     margin-bottom: 1rem;
+    color: var(--text-dark);
 }
 
 .about-card p {
     color: var(--text-gray);
-    line-height: 1.7;
+    line-height: 1.8;
+}
+
+.about-card strong {
+    color: var(--primary);
+    font-weight: 600;
 }
 
 /* Work Section */
@@ -332,13 +338,19 @@ section {
     display: flex;
     align-items: center;
     justify-content: center;
+    background: var(--bg-gray);
+    padding: 2rem;
+    border-radius: var(--radius-lg);
 }
 
 .project-image img {
     width: 100%;
-    height: 100%;
+    height: auto;
+    max-height: 400px;
     object-fit: contain;
     transition: transform 0.3s;
+    border-radius: var(--radius-sm);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .project-image svg {
@@ -373,8 +385,13 @@ section {
 
 .project-description {
     color: var(--text-gray);
-    line-height: 1.7;
+    line-height: 1.8;
     margin-bottom: 1.5rem;
+}
+
+.project-description strong {
+    color: var(--primary);
+    font-weight: 600;
 }
 
 .tech-stack {
