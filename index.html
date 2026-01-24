@@ -4,227 +4,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mohammed Alsakkaf | Neon Architect</title>
+    <title>Mohammed Alsakkaf | Software Architect</title>
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-    <!-- Aesthetics -->
-    <div class="c-dot"></div>
-    <div class="c-circle"></div>
-    <div class="aura aura-purple"></div>
-    <div class="aura aura-green"></div>
-
-    <header>
-        <nav class="nav-pill">
-            <a href="#home" class="nav-link">Home</a>
-            <a href="#about" class="nav-link">About</a>
-            <a href="#experience" class="nav-link">Experience</a>
-            <a href="#skills" class="nav-link">Skills</a>
-            <a href="#projects" class="nav-link">Projects</a>
-            <a href="#contact" class="nav-link">Contact</a>
-        </nav>
-    </header>
-
-    <main>
-        <!-- Home Section -->
-        <section id="home" class="hero container">
-            <div class="hero-badge">Welcome to my universe</div>
-            <h1 class="hero-massive-title">
-                Frontend Developer<br>
-                & <span class="purple-shimmer">Creative Coder</span>
-            </h1>
-            <p class="hero-desc">
-                I craft beautiful, interactive web experiences with modern technologies.
-                Passionate about clean code, stunning designs, and seamless user experiences.
-            </p>
-            <div class="btn-group">
-                <a href="#projects" class="neo-btn neo-btn-primary">Explore My Universe</a>
-                <a href="#" class="neo-btn neo-btn-outline">Download CV</a>
+    <div class="main-wrapper">
+        <header class="site-header">
+            <div style="font-family: 'Space Grotesk'; font-weight: 700; font-size: 1.2rem; letter-spacing: -1px;">
+                M.ALSAKKAF<span style="color: var(--cyan);">_</span>
             </div>
-        </section>
+            <nav class="nav-links">
+                <a href="#about">Dossier</a>
+                <a href="#work">Work</a>
+                <a href="mailto:alsakkaf.dev@outlook.com">Uplink</a>
+            </nav>
+        </header>
 
-        <!-- About Section -->
-        <section id="about" class="container">
-            <div class="about-box">
-                <div class="about-text">
-                    <p>I'm a passionate frontend developer with a love for creating beautiful, functional web
-                        experiences. My journey in web development started with curiosity and has evolved into a
-                        dedication to crafting digital solutions that make a difference.</p>
-                    <p>When I'm not coding, you'll find me exploring new technologies, contributing to open-source
-                        projects, or learning about the latest trends in web development.</p>
+        <main class="bento-grid">
+            <!-- Hero Card -->
+            <div class="bento-card span-2 hero-card cyan-glow">
+                <span class="tag">System Initialize</span>
+                <h1 class="card-title">Software Engineer <br>& <span style="color: var(--cyan);">Architect.</span></h1>
+                <p class="card-desc">
+                    Designing structural logic and creative digital experiences with precision. Currently forging the
+                    future at UTM.
+                </p>
+                <div class="stat-box">
                     <div class="stat-row">
-                        <div class="stat-item">
-                            <h4>2+</h4>
-                            <span>Years Exp.</span>
-                        </div>
-                        <div class="stat-item">
-                            <h4>15+</h4>
-                            <span>Projects</span>
-                        </div>
-                        <div class="stat-item">
-                            <h4>∞</h4>
-                            <span>Curiosity</span>
-                        </div>
+                        <span class="stat-label">Academic Node</span>
+                        <span class="stat-val">UTM, JB</span>
                     </div>
-                </div>
-                <div class="img-frame">
-                    <img src="assets/images/profile.jpg" alt="Mohammed Alsakkaf" class="portrait">
-                </div>
-            </div>
-        </section>
-
-        <!-- Experience Section -->
-        <section id="experience" class="container">
-            <h2 class="hero-massive-title" style="font-size: 3rem; text-align: center; margin-bottom: 2rem;">
-                Experience
-            </h2>
-            <div class="timeline">
-                <div class="timeline-item">
-                    <div class="timeline-dot"></div>
-                    <div class="timeline-card">
-                        <h3 style="color: var(--acc-green);">Front-End Developer Intern</h3>
-                        <p style="color: var(--text-dim); margin-bottom: 0.5rem;">01Neo (On Site) | Jun 2025</p>
-                        <ul style="color: var(--text-dim); padding-left: 1.2rem;">
-                            <li>Developed reusable components with Next.js and Tailwind.</li>
-                            <li>Integrated RESTful APIs and handled state securely.</li>
-                            <li>Collaborated with design teams for pixel-perfect UI.</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="timeline-item">
-                    <div class="timeline-dot"></div>
-                    <div class="timeline-card">
-                        <h3 style="color: var(--acc-green);">Freelance Web Developer</h3>
-                        <p style="color: var(--text-dim); margin-bottom: 0.5rem;">Independent | 2023 - 2025</p>
-                        <p style="color: var(--text-dim);">Delivered custom web solutions for diverse clients across
-                            multiple industries, maintaining 100% satisfaction.</p>
+                    <div class="stat-row">
+                        <span class="stat-label">Semester Progress</span>
+                        <span class="stat-val">Year 2, Sem 4</span>
                     </div>
                 </div>
             </div>
-        </section>
 
-        <!-- Skills Section -->
-        <section id="skills" class="container">
-            <h2 class="hero-massive-title" style="font-size: 3rem; text-align: center; margin-bottom: 4rem;">
-                Skills & <span class="purple-shimmer">Technologies</span>
-            </h2>
-            <div class="skills-grid">
-                <div class="skill-box">
-                    <div class="skill-icon"
-                        style="background: url('https://raw.githubusercontent.com/devicons/devicon/master/icons/javascript/javascript-original.svg') center/contain no-repeat;">
-                    </div>
-                    <p>JavaScript</p>
-                    <div class="skill-level" style="width: 85%;"></div>
-                </div>
-                <div class="skill-box">
-                    <div class="skill-icon"
-                        style="background: url('https://raw.githubusercontent.com/devicons/devicon/master/icons/react/react-original.svg') center/contain no-repeat;">
-                    </div>
-                    <p>React</p>
-                    <div class="skill-level" style="width: 80%;"></div>
-                </div>
-                <div class="skill-box">
-                    <div class="skill-icon"
-                        style="background: url('https://raw.githubusercontent.com/devicons/devicon/master/icons/typescript/typescript-original.svg') center/contain no-repeat;">
-                    </div>
-                    <p>TypeScript</p>
-                    <div class="skill-level" style="width: 75%;"></div>
-                </div>
-                <div class="skill-box">
-                    <div class="skill-icon"
-                        style="background: url('https://raw.githubusercontent.com/devicons/devicon/master/icons/tailwindcss/tailwindcss-original.svg') center/contain no-repeat;">
-                    </div>
-                    <p>Tailwind</p>
-                    <div class="skill-level" style="width: 90%;"></div>
-                </div>
-                <div class="skill-box">
-                    <div class="skill-icon"
-                        style="background: url('https://raw.githubusercontent.com/devicons/devicon/master/icons/html5/html5-original.svg') center/contain no-repeat;">
-                    </div>
-                    <p>HTML5</p>
-                    <div class="skill-level" style="width: 95%;"></div>
-                </div>
-                <div class="skill-box">
-                    <div class="skill-icon"
-                        style="background: url('https://raw.githubusercontent.com/devicons/devicon/master/icons/css3/css3-original.svg') center/contain no-repeat;">
-                    </div>
-                    <p>CSS3</p>
-                    <div class="skill-level" style="width: 90%;"></div>
+            <!-- Portrait Card -->
+            <div class="bento-card row-2 purple-glow">
+                <div class="portrait-container"></div>
+                <div style="margin-top: 1.5rem;">
+                    <span class="tag" style="color: var(--purple);">Identity</span>
+                    <h3 style="font-family: 'Space Grotesk';">Mohammed Alsakkaf</h3>
+                    <p style="font-size: 0.8rem; color: var(--text-dim);">Born in Yemen. Raised in KSA. Scaled in
+                        Malaysia.</p>
                 </div>
             </div>
-        </section>
 
-        <!-- Projects Section -->
-        <section id="projects" class="container">
-            <h2 class="hero-massive-title" style="font-size: 3rem; text-align: center; margin-bottom: 4rem;">
-                Featured <span class="green-shimmer">Projects</span>
-            </h2>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2rem;">
-                <div class="timeline-card" style="padding: 0; overflow: hidden;">
-                    <img src="assets/images/quizzup-preview.png" style="width: 100%; height: 200px; object-fit: cover;">
-                    <div style="padding: 2rem;">
-                        <h3 style="color: var(--acc-purple); margin-bottom: 1rem;">QuizzUp Pro</h3>
-                        <p style="color: var(--text-dim);">A premium quiz platform built with local storage and deep
-                            logic.</p>
-                        <a href="projects/quizzup/index.html"
-                            style="color: var(--acc-purple); text-decoration: none; display: block; margin-top: 1rem; font-weight: 700;">View
-                            Live →</a>
-                    </div>
+            <!-- Skills Card -->
+            <div class="bento-card">
+                <span class="tag">Core Logic</span>
+                <h3 style="font-family: 'Space Grotesk'; margin-bottom: 1rem;">Tech Stack</h3>
+                <div style="display: flex; wrap: wrap;">
+                    <span class="skill-pill">C++</span>
+                    <span class="skill-pill">HTML5</span>
+                    <span class="skill-pill">CSS3</span>
+                    <span class="skill-pill">JS</span>
+                    <span class="skill-pill">System Architecture</span>
                 </div>
-                <!-- Mock Project 2 -->
-                <div class="timeline-card" style="padding: 0; overflow: hidden;">
-                    <div
-                        style="width: 100%; height: 200px; background: #111; display: flex; align-items: center; justify-content: center; color: #333; font-size: 3rem; font-weight: 900;">
-                        TODO</div>
-                    <div style="padding: 2rem;">
-                        <h3 style="color: var(--acc-purple); margin-bottom: 1rem;">Todo Universe</h3>
-                        <p style="color: var(--text-dim);">A cloud-synced task manager for high-productivity teams.</p>
-                        <a href="#"
-                            style="color: var(--acc-purple); text-decoration: none; display: block; margin-top: 1rem; font-weight: 700;">View
-                            Code →</a>
+            </div>
+
+            <!-- History Card -->
+            <div class="bento-card span-2 purple-glow">
+                <span class="tag" style="color: var(--purple);">Trajectory Log</span>
+                <div class="experience-list">
+                    <div class="exp-item">
+                        <span class="exp-date">2023 - Present</span>
+                        <p class="exp-title">Universiti Teknologi Malaysia</p>
+                        <p class="card-desc">Bachelor of Software Engineering. Focused on algorithm optimization and
+                            structural UI.</p>
+                    </div>
+                    <div class="exp-item">
+                        <span class="exp-date">2008 - 2023</span>
+                        <p class="exp-title">Saudi Arabia Foundation</p>
+                        <p class="card-desc">Developed a detail-oriented mindset and creative problem-solving skills
+                            over 15 years.</p>
                     </div>
                 </div>
             </div>
-        </section>
 
-        <!-- Contact Section -->
-        <section id="contact" class="container" style="text-align: center;">
-            <h2 class="hero-massive-title" style="font-size: 3rem; margin-bottom: 1rem;">Get In Touch</h2>
-            <p style="color: var(--text-dim); margin-bottom: 3rem;">Ready to bring your ideas to life? Let's create
-                something amazing together.</p>
-            <form id="contact-form"
-                style="max-width: 600px; margin: 0 auto; text-align: left; background: var(--glass-bg); padding: 3rem; border-radius: 2rem; border: 1px solid var(--glass-border);">
-                <div style="margin-bottom: 1.5rem;">
-                    <label
-                        style="display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 0.5rem; text-transform: uppercase;">Name</label>
-                    <input type="text"
-                        style="width: 100%; background: #000; border: 1px solid var(--glass-border); padding: 1rem; color: #fff; border-radius: 12px;"
-                        required>
-                </div>
-                <div style="margin-bottom: 1.5rem;">
-                    <label
-                        style="display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 0.5rem; text-transform: uppercase;">Email</label>
-                    <input type="email"
-                        style="width: 100%; background: #000; border: 1px solid var(--glass-border); padding: 1rem; color: #fff; border-radius: 12px;"
-                        required>
-                </div>
-                <div style="margin-bottom: 2rem;">
-                    <label
-                        style="display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 0.5rem; text-transform: uppercase;">Message</label>
-                    <textarea
-                        style="width: 100%; background: #000; border: 1px solid var(--glass-border); padding: 1rem; color: #fff; border-radius: 12px; min-height: 150px;"
-                        required></textarea>
-                </div>
-                <button type="submit" class="neo-btn neo-btn-primary"
-                    style="width: 100%; border: none; cursor: pointer;">Send Transmission →</button>
-            </form>
-        </section>
-    </main>
+            <!-- Project Card -->
+            <div class="bento-card span-2 cyan-glow" id="work">
+                <span class="tag">Deployed Units</span>
+                <h2 class="card-title">QuizzUp Pro.</h2>
+                <p class="card-desc">A premium quiz application engine with sophisticated state management and logic.
+                </p>
+                <a href="projects/quizzup/index.html" class="project-link">
+                    <span>Access Deployed Asset</span>
+                    <span>→</span>
+                </a>
+            </div>
 
-    <footer style="padding: 4rem 0; border-top: 1px solid var(--glass-border); text-align: center;">
-        <p style="color: var(--text-dim); font-size: 0.8rem;">© 2026 Architected by Mohammed Alsakkaf</p>
-    </footer>
+            <!-- Work Style Card -->
+            <div class="bento-card">
+                <span class="tag">Methodology</span>
+                <h3 style="font-family: 'Space Grotesk'; margin-bottom: 0.5rem;">The Step-By-Step</h3>
+                <p class="card-desc" style="font-size: 0.8rem;">
+                    Strict adherence to structural integrity. Full understanding before execution. Absolute precision in
+                    aesthetics.
+                </p>
+            </div>
+
+            <!-- Contact Card -->
+            <div class="bento-card cyan-glow">
+                <span class="tag">Communication</span>
+                <h3 style="font-family: 'Space Grotesk';">Establish Uplink</h3>
+                <p class="card-desc" style="font-size: 0.8rem; margin-bottom: 1.5rem;">Open for collaboration on
+                    high-end engineering projects.</p>
+                <a href="mailto:alsakkaf.dev@outlook.com"
+                    style="color: var(--cyan); font-weight: 700; text-decoration: none;">TRANSMIT_EMAIL →</a>
+            </div>
+        </main>
+
+        <footer
+            style="margin-top: 4rem; padding: 2rem 0; border-top: 1px solid var(--border); text-align: center; color: var(--text-dim); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px;">
+            © 2026 ARCHITECTED BY MOHAMMED ALSAKKAF // CORE_STATUS: ONLINE
+        </footer>
+    </div>
 
     <script src="script.js"></script>
 </body>

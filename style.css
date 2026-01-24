@@ -1,352 +1,268 @@
 /* ==========================================
-   MOHAMMED ALSAKKAF - THE NEON ARCHITECT (2026)
-   Aesthetic: Dark Mesh, Cyber-Glow, Precision Timeline
+   BENTO ARCHITECT - MOHAMMED ALSAKKAF (v6.0)
+   Concept: Modern Bento Grid, Neon Outlines, Data-Driven
+   Aesthetic: Deep Black, Electric Cyan/Purple, Precision
    ========================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;600;800&display=swap');
 
 :root {
-    --bg-black: #050505;
-    --acc-purple: #9d50bb;
-    --acc-green: #00f260;
-    --text-pure: #ffffff;
-    --text-dim: #a0a0a0;
-    --glass-bg: rgba(255, 255, 255, 0.03);
-    --glass-border: rgba(255, 255, 255, 0.08);
-    --grid-color: rgba(255, 255, 255, 0.05);
+    --bg: #000000;
+    --card-bg: rgba(10, 10, 10, 0.8);
+    --border: rgba(255, 255, 255, 0.05);
+    --cyan: #00f2ff;
+    --purple: #bc00ff;
+    --text: #ffffff;
+    --text-dim: #888888;
 
-    --purple-glow: 0 0 20px rgba(157, 80, 187, 0.3);
-    --green-glow: 0 0 20px rgba(0, 242, 96, 0.3);
+    --glow-cyan: 0 0 20px rgba(0, 242, 255, 0.15);
+    --glow-purple: 0 0 20px rgba(188, 0, 255, 0.15);
 }
 
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    cursor: none;
 }
 
 body {
-    background-color: var(--bg-black);
-    color: var(--text-pure);
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
     overflow-x: hidden;
-    line-height: 1.6;
+    line-height: 1.5;
 }
 
-/* === Subliminal Grid === */
-body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image:
-        linear-gradient(var(--grid-color) 1px, transparent 1px),
-        linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
-    background-size: 50px 50px;
-    z-index: -1;
-    pointer-events: none;
+.main-wrapper {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 4rem 2rem;
 }
 
-/* === Floating Navigation === */
-header {
-    position: fixed;
-    top: 2rem;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1000;
-    width: auto;
+/* === Layout: Bento Grid === */
+.bento-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: auto;
+    gap: 1.5rem;
+    margin-top: 3rem;
 }
 
-.nav-pill {
-    background: rgba(10, 10, 10, 0.8);
-    backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border);
-    border-radius: 100px;
-    padding: 0.5rem 2rem;
+.bento-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.bento-card:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-5px);
+}
+
+/* Card Variations */
+.span-2 {
+    grid-column: span 2;
+}
+
+.span-3 {
+    grid-column: span 3;
+}
+
+.row-2 {
+    grid-row: span 2;
+}
+
+/* === Neon Details === */
+.cyan-glow {
+    border-color: rgba(0, 242, 255, 0.3);
+    box-shadow: var(--glow-cyan);
+}
+
+.purple-glow {
+    border-color: rgba(188, 0, 255, 0.3);
+    box-shadow: var(--glow-purple);
+}
+
+.cyan-glow:hover {
+    border-color: var(--cyan);
+    box-shadow: 0 0 30px rgba(0, 242, 255, 0.3);
+}
+
+.purple-glow:hover {
+    border-color: var(--purple);
+    box-shadow: 0 0 30px rgba(188, 0, 255, 0.3);
+}
+
+/* === Header === */
+.site-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4rem;
+}
+
+.nav-links {
     display: flex;
     gap: 2rem;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
-.nav-link {
-    color: var(--text-dim);
+.nav-links a {
     text-decoration: none;
-    font-size: 0.85rem;
-    font-weight: 500;
-    transition: color 0.3s;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.nav-link:hover,
-.nav-link.active {
-    color: var(--acc-purple);
-}
-
-/* === Liquid Auras === */
-.aura {
-    position: fixed;
-    width: 40vw;
-    height: 40vw;
-    border-radius: 50%;
-    filter: blur(100px);
-    opacity: 0.15;
-    z-index: -1;
-    pointer-events: none;
-}
-
-.aura-purple {
-    top: -10%;
-    right: -10%;
-    background: var(--acc-purple);
-}
-
-.aura-green {
-    bottom: -10%;
-    left: -10%;
-    background: var(--acc-green);
-}
-
-/* === Hero Architecture === */
-.hero {
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    padding-top: 5rem;
-}
-
-.hero-badge {
-    background: var(--glass-bg);
-    border: 1px solid var(--acc-purple);
-    color: var(--acc-purple);
-    padding: 0.4rem 1.2rem;
-    border-radius: 100px;
-    font-size: 0.75rem;
-    font-weight: 700;
+    color: var(--text-dim);
+    font-size: 0.8rem;
     text-transform: uppercase;
     letter-spacing: 2px;
-    margin-bottom: 2rem;
-    box-shadow: var(--purple-glow);
+    transition: color 0.3s;
 }
 
-.hero-massive-title {
-    font-family: 'Outfit', sans-serif;
-    font-size: clamp(3rem, 10vw, 7rem);
-    font-weight: 800;
-    line-height: 1;
-    letter-spacing: -2px;
-    margin-bottom: 2rem;
+.nav-links a:hover {
+    color: #fff;
 }
 
-.purple-shimmer {
-    color: #d4a5ff;
+/* === Content Styles === */
+.tag {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--cyan);
+    margin-bottom: 1rem;
+    display: block;
 }
 
-.green-shimmer {
-    color: #00f260;
-}
-
-.hero-desc {
-    font-size: 1.1rem;
-    color: var(--text-dim);
-    max-width: 700px;
-    margin-bottom: 3rem;
-}
-
-.btn-group {
-    display: flex;
-    gap: 1.5rem;
-}
-
-.neo-btn {
-    padding: 1rem 2.5rem;
-    border-radius: 12px;
+.card-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 2rem;
     font-weight: 700;
-    text-decoration: none;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
+    margin-bottom: 1rem;
 }
 
-.neo-btn-primary {
-    background: var(--acc-purple);
-    color: white;
-    box-shadow: var(--purple-glow);
-}
-
-.neo-btn-primary:hover {
-    transform: translateY(-5px) scale(1.02);
-    box-shadow: 0 15px 40px rgba(157, 80, 187, 0.5);
-}
-
-.neo-btn-outline {
-    border: 1px solid var(--glass-border);
-    color: white;
-    background: rgba(255, 255, 255, 0.02);
-}
-
-.neo-btn-outline:hover {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: var(--text-pure);
-}
-
-/* === About Grid === */
-.about-box {
-    display: grid;
-    grid-template-columns: 1.2fr 0.8fr;
-    gap: 4rem;
-    align-items: center;
-    padding: 10vh 0;
-}
-
-.about-text {
-    font-size: 1.1rem;
+.card-desc {
     color: var(--text-dim);
+    font-size: 0.95rem;
 }
 
-.about-text p {
-    margin-bottom: 2rem;
-}
-
-.img-frame {
-    position: relative;
-    border-radius: 2rem;
-    overflow: hidden;
-    aspect-ratio: 1/1.2;
-    border: 1px solid var(--glass-border);
-}
-
-.portrait {
+/* Portrait Card */
+.portrait-container {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    min-height: 400px;
+    background: url('assets/images/profile.jpg') center/cover no-repeat;
+    border-radius: 16px;
+    filter: grayscale(100%) contrast(1.1);
+    transition: filter 0.5s;
+}
+
+.bento-card:hover .portrait-container {
+    filter: grayscale(0%);
+}
+
+/* Stats Styling */
+.stat-box {
+    margin-top: 2rem;
 }
 
 .stat-row {
     display: flex;
-    gap: 3rem;
-    margin-top: 3rem;
+    justify-content: space-between;
+    padding: 0.8rem 0;
+    border-bottom: 1px solid var(--border);
 }
 
-.stat-item h4 {
-    font-size: 2rem;
-    color: var(--acc-purple);
-}
-
-.stat-item span {
-    font-size: 0.8rem;
+.stat-label {
     color: var(--text-dim);
+    font-size: 0.8rem;
+}
+
+.stat-val {
+    color: var(--cyan);
+    font-weight: 600;
+}
+
+/* Skills HUD */
+.skill-pill {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    font-size: 0.75rem;
+    margin: 0.3rem;
+    transition: all 0.3s;
+}
+
+.skill-pill:hover {
+    background: var(--purple);
+    border-color: var(--purple);
+    color: #fff;
+}
+
+/* Projects Link */
+.project-link {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2rem;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    text-decoration: none;
+    color: #fff;
+    transition: background 0.3s;
+}
+
+.project-link:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Grid Specifics */
+.hero-card {
+    background: linear-gradient(135deg, rgba(10, 10, 10, 1) 0%, rgba(20, 20, 20, 1) 100%);
+}
+
+.experience-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.exp-item {
+    border-left: 2px solid var(--purple);
+    padding-left: 1.5rem;
+}
+
+.exp-date {
+    font-size: 0.7rem;
+    color: var(--purple);
     text-transform: uppercase;
     font-weight: 700;
 }
 
-/* === Timeline Experience === */
-.timeline {
-    position: relative;
-    max-width: 900px;
-    margin: 5rem auto;
-    padding-left: 3rem;
-    border-left: 2px solid var(--glass-border);
+.exp-title {
+    font-weight: 600;
+    margin: 0.2rem 0;
 }
 
-.timeline-item {
-    position: relative;
-    margin-bottom: 4rem;
+@media (max-width: 1100px) {
+    .bento-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
-.timeline-dot {
-    position: absolute;
-    left: -3.65rem;
-    top: 0.5rem;
-    width: 1rem;
-    height: 1rem;
-    background: var(--acc-green);
-    border-radius: 50%;
-    box-shadow: var(--green-glow);
-}
-
-.timeline-card {
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    border-radius: 1.5rem;
-    padding: 2.5rem;
-    transition: border-color 0.3s;
-}
-
-.timeline-card:hover {
-    border-color: var(--acc-green);
-}
-
-/* === Skills Glowing Grid === */
-.skills-grid {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 1.5rem;
-}
-
-.skill-box {
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    border-radius: 1rem;
-    padding: 2rem;
-    text-align: center;
-    transition: all 0.3s;
-    position: relative;
-    overflow: hidden;
-}
-
-.skill-box:hover {
-    background: rgba(255, 255, 255, 0.05);
-    transform: translateY(-5px);
-}
-
-.skill-icon {
-    width: 40px;
-    height: 40px;
-    margin-bottom: 1rem;
-}
-
-.skill-level {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    height: 3px;
-    background: var(--acc-purple);
-    width: 70%;
-}
-
-/* === Custom Cursor (The One the User needs) === */
-.c-dot {
-    position: fixed;
-    width: 10px;
-    height: 10px;
-    background: var(--acc-purple);
-    border-radius: 50%;
-    z-index: 10000;
-    pointer-events: none;
-}
-
-.c-circle {
-    position: fixed;
-    width: 40px;
-    height: 40px;
-    border: 1px solid var(--acc-purple);
-    border-radius: 50%;
-    z-index: 9999;
-    pointer-events: none;
-    transition: transform 0.15s ease-out;
-}
-
-@media (max-width: 1024px) {
-    .skills-grid {
-        grid-template-columns: repeat(3, 1fr);
+@media (max-width: 600px) {
+    .bento-grid {
+        grid-template-columns: 1fr;
     }
 
-    .about-box {
-        grid-template-columns: 1fr;
+    .span-2,
+    .span-3,
+    .row-2 {
+        grid-column: span 1;
+        grid-row: span 1;
     }
 }
