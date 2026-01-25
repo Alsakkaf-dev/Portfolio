@@ -22,7 +22,7 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 
-// Form submission
+// Form submission with Modal Feedback
 const form = document.querySelector('.contact-form');
 if (form) {
     form.addEventListener('submit', async function (e) {
@@ -33,33 +33,48 @@ if (form) {
         btn.textContent = 'Sending...';
         btn.disabled = true;
 
+        // Convert FormData to JSON for professional API submission
         const formData = new FormData(this);
+        const data = Object.fromEntries(formData.entries());
 
         try {
             const response = await fetch(this.action, {
                 method: 'POST',
-                body: formData,
+                body: JSON.stringify(data),
                 headers: {
+                    'Content-Type': 'application/json',
                     'Accept': 'application/json'
                 }
             });
 
             if (response.ok) {
-                btn.textContent = '✓ Message Sent!';
+                showModal('modal-success');
                 this.reset();
             } else {
-                btn.textContent = '✖ Error Sending';
+                showModal('modal-error');
             }
         } catch (error) {
-            btn.textContent = '✖ Technical Error';
+            showModal('modal-error');
         }
 
-        setTimeout(() => {
-            btn.textContent = originalText;
-            btn.disabled = false;
-        }, 3000);
+        btn.textContent = originalText;
+        btn.disabled = false;
     });
 }
+
+// Modal Helpers
+function showModal(id) {
+    document.getElementById(id).classList.remove('hidden');
+    document.body.style.overflow = 'hidden'; // Prevent scrolling
+}
+
+function closeModal(id) {
+    document.getElementById(id).classList.add('hidden');
+    document.body.style.overflow = 'auto'; // Restore scrolling
+}
+
+// Make globally available
+window.closeModal = closeModal;
 
 // Navbar scroll effect
 window.addEventListener('scroll', () => {
