@@ -151,6 +151,7 @@ function navigateTo(viewName, params = {}) {
     switch (viewName) {
         case 'dashboard': renderDashboard(); break;
         case 'leaderboard': renderLeaderboard(); break;
+        case 'community': renderCommunity(); break;
         case 'profile': renderProfile(); break;
         case 'admin':
             pageTitle.textContent = "System Control";
