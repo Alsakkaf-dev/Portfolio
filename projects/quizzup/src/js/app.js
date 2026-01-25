@@ -1101,8 +1101,8 @@ async function renderCommunity() {
         chat = await DataManager.getChatHistory();
     } catch (e) {
         console.warn("Async fetch failed, using fallback", e);
-        posts = JSON.parse(localStorage.getItem('quizzup_posts')) || [];
-        chat = JSON.parse(localStorage.getItem('quizzup_chat')) || [];
+        posts = JSON.parse(localStorage.getItem('quizzup_posts_v2')) || [];
+        chat = JSON.parse(localStorage.getItem('quizzup_chat_v2')) || [];
     }
 
     mainContent.innerHTML = `

@@ -250,11 +250,11 @@ const DataManager = {
     // --- Community & Social Data ---
 
     getPosts: function () {
-        return JSON.parse(localStorage.getItem('quizzup_posts')) || [];
+        return JSON.parse(localStorage.getItem('quizzup_posts_v2')) || [];
     },
 
     savePosts: function (posts) {
-        localStorage.setItem('quizzup_posts', JSON.stringify(posts));
+        localStorage.setItem('quizzup_posts_v2', JSON.stringify(posts));
     },
 
     addPost: function (post) {
@@ -267,11 +267,11 @@ const DataManager = {
     },
 
     getChatHistory: function () {
-        return JSON.parse(localStorage.getItem('quizzup_chat')) || [];
+        return JSON.parse(localStorage.getItem('quizzup_chat_v2')) || [];
     },
 
     saveChatHistory: function (chat) {
-        localStorage.setItem('quizzup_chat', JSON.stringify(chat));
+        localStorage.setItem('quizzup_chat_v2', JSON.stringify(chat));
     },
 
     addChatMessage: function (msg) {
