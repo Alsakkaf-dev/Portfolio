@@ -490,7 +490,7 @@ function renderQuiz() {
  * Handles the user's answer selection.
  * @param {number|string} answer - The selected answer index (MCQ) or 'true'/'false' (TF).
  */
-window.handleAnswer = function(answer) {
+window.handleAnswer = function (answer) {
     const q = STATE.quiz.data[STATE.quiz.index];
     const btns = document.querySelectorAll('.option-btn');
     const feedbackArea = document.getElementById('feedback-area');
@@ -707,7 +707,7 @@ function renderLeaderboard() {
                 </thead>
                 <tbody>
                     ${sorted.map((u, i) => `
-                        <tr class="leaderboard-row rank-${i + 1}" onclick="inspectUser('${u.username}')">
+                        <tr class="leaderboard-row rank-${i + 1} ${STATE.currentUser && u.username === STATE.currentUser.username ? 'current-user' : ''}" onclick="inspectUser('${u.username}')">
                             <td style="padding-left: 1.5rem;">
                                 <span class="rank-cell">#${i + 1}</span>
                             </td>

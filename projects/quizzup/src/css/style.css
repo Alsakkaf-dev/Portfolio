@@ -1131,3 +1131,134 @@ button {
 .dropdown-close:hover {
     color: var(--text-primary);
 }
+
+/* =========================================
+   CUSTOM ENHANCEMENTS
+   ========================================= */
+
+/* Portfolio Button in Top Bar */
+.portfolio-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.2rem;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(168, 85, 247, 0.1));
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 100px;
+    color: var(--primary);
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-decoration: none;
+}
+
+.portfolio-btn:hover {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(168, 85, 247, 0.15));
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+}
+
+.portfolio-icon {
+    font-size: 1.1rem;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.portfolio-text {
+    font-family: var(--font-heading);
+}
+
+/* Enhanced Welcome Screen */
+.intro-welcome {
+    text-align: center;
+    z-index: 10;
+    position: relative;
+}
+
+.welcome-line-1 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+    margin-bottom: 1rem;
+    opacity: 0;
+    animation: fadeInUp 0.8s ease forwards 0.5s;
+}
+
+.welcome-line-2 {
+    font-size: 3rem;
+    font-weight: 800;
+    font-family: var(--font-heading);
+    background: linear-gradient(90deg, var(--primary), var(--tertiary));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin-bottom: 1rem;
+    opacity: 0;
+    animation: fadeInUp 0.8s ease forwards 1s;
+}
+
+.welcome-line-3 {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    opacity: 0;
+    animation: fadeInUp 0.8s ease forwards 1.5s;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Highlight Current User in Leaderboard */
+.leaderboard-row.current-user {
+    background: linear-gradient(90deg, rgba(99, 102, 241, 0.2), rgba(168, 85, 247, 0.1)) !important;
+    border: 2px solid var(--primary) !important;
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+    transform: scale(1.02);
+}
+
+.leaderboard-row.current-user td {
+    border-color: var(--primary) !important;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.leaderboard-row.current-user .rank-cell {
+    color: var(--primary);
+    text-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .portfolio-text {
+        display: none;
+    }
+    
+    .portfolio-btn {
+        padding: 0.6rem;
+    }
+    
+    .welcome-line-1 {
+        font-size: 1rem;
+    }
+    
+    .welcome-line-2 {
+        font-size: 2rem;
+    }
+    
+    .welcome-line-3 {
+        font-size: 0.9rem;
+    }
+}
