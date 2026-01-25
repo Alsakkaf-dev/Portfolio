@@ -1,137 +1,279 @@
 /**
- * @fileoverview QuizzUp Data Manager
- * Handles data persistence (localStorage) and state management for users and quiz content.
- * @author Mohammed Alsakkaf
+ * @fileoverview QuizzUp Data Manager (Enhanced Architecture)
+ * Implements a robust StorageEngine using IndexedDB with an in-memory Write-Through Cache.
+ * Handles persistence for Users, Posts, Chat, and Quiz Content.
+ * @author Mohammed Alsakkaf (Refactored by Jolce)
  */
 
-const DATA_KEY = 'quizzup_content_v1';
-const USERS_KEY = 'quizzup_arena_v1';
-
-// Static fallback data (The original quizData)
-const INITIAL_DATA = {
-    SPM: {
-        "CH 6": [], // Will be populated by the migration logic if needed, or we rely on the static file content initially
-        "CH 7": [],
-        "CH 8": []
-    },
-    DSA: { "CH 6": [], "CH 7": [], "CH 8": [] },
-    HCI: { "CH 6": [], "CH 7": [], "CH 8": [] },
-    OS: { "CH 6": [], "CH 7": [], "CH 8": [] }
+const DB_NAME = 'QuizzUp_GlobalNexus';
+const DB_VERSION = 1;
+const STORES = {
+    USERS: 'users',
+    POSTS: 'posts',
+    CHAT: 'chat',
+    SYSTEM: 'system' // For quizData and other configs
 };
 
+class StorageEngine {
+    constructor() {
+        this.db = null;
+        this.cache = {
+            users: [],
+            posts: [],
+            chat: [],
+            quizData: null
+        };
+        this.readyPromise = this.initDB();
+    }
+
+    /**
+     * Initializes the IndexedDB connection and loads data into cache.
+     */
+    async initDB() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+            request.onupgradeneeded = (event) => {
+                const db = event.target.result;
+                if (!db.objectStoreNames.contains(STORES.USERS)) {
+                    db.createObjectStore(STORES.USERS, { keyPath: 'username' });
+                }
+                if (!db.objectStoreNames.contains(STORES.POSTS)) {
+                    db.createObjectStore(STORES.POSTS, { keyPath: 'id' });
+                }
+                if (!db.objectStoreNames.contains(STORES.CHAT)) {
+                    db.createObjectStore(STORES.CHAT, { keyPath: 'id', autoIncrement: true });
+                }
+                if (!db.objectStoreNames.contains(STORES.SYSTEM)) {
+                    db.createObjectStore(STORES.SYSTEM, { keyPath: 'key' });
+                }
+            };
+
+            request.onsuccess = async (event) => {
+                this.db = event.target.result;
+                console.log("✅ [StorageEngine] Database Connected: " + DB_NAME);
+                await this.loadCache();
+                resolve();
+            };
+
+            request.onerror = (event) => {
+                console.error("❌ [StorageEngine] Connection Failed:", event.target.error);
+                reject(event.target.error);
+            };
+        });
+    }
+
+    /**
+     * Loads all data from IDB into memory for synchronous access.
+     */
+    async loadCache() {
+        try {
+            this.cache.users = await this.getAll(STORES.USERS);
+            this.cache.posts = await this.getAll(STORES.POSTS);
+            this.cache.chat = await this.getAll(STORES.CHAT);
+
+            const qData = await this.get(STORES.SYSTEM, 'quizData');
+            this.cache.quizData = qData ? qData.value : null;
+
+            console.log("✅ [StorageEngine] Cache Hydrated", {
+                users: this.cache.users.length,
+                posts: this.cache.posts.length,
+                chat: this.cache.chat.length
+            });
+        } catch (e) {
+            console.error("❌ [StorageEngine] Cache Load Error:", e);
+        }
+    }
+
+    // --- Low Level IDB Helpers ---
+
+    async getAll(storeName) {
+        return new Promise((resolve, reject) => {
+            const tx = this.db.transaction(storeName, 'readonly');
+            const store = tx.objectStore(storeName);
+            const request = store.getAll();
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async get(storeName, key) {
+        return new Promise((resolve, reject) => {
+            const tx = this.db.transaction(storeName, 'readonly');
+            const store = tx.objectStore(storeName);
+            const request = store.get(key);
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async put(storeName, item) {
+        return new Promise((resolve, reject) => {
+            const tx = this.db.transaction(storeName, 'readwrite');
+            const store = tx.objectStore(storeName);
+            const request = store.put(item);
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async delete(storeName, key) {
+        return new Promise((resolve, reject) => {
+            const tx = this.db.transaction(storeName, 'readwrite');
+            const store = tx.objectStore(storeName);
+            const request = store.delete(key);
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async clear(storeName) {
+         return new Promise((resolve, reject) => {
+            const tx = this.db.transaction(storeName, 'readwrite');
+            const store = tx.objectStore(storeName);
+            const request = store.clear();
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    }
+}
+
+// Singleton Instance
+const Storage = new StorageEngine();
+
 /**
- * DataManager object for handling all data interactions.
- * @namespace DataManager
+ * DataManager Facade
+ * Exposes methods expected by app.js, bridging sync cache and async DB.
  */
 const DataManager = {
-    // --- Core Data Access ---
+    // --- Initialization ---
+    init: async function() {
+        await Storage.readyPromise;
 
-    /**
-     * Retrieves the quiz data from localStorage or initializes it.
-     * @returns {Object} The quiz data object.
-     */
-    getQuizData: function () {
-        const stored = localStorage.getItem(DATA_KEY);
-        if (stored) {
-            return JSON.parse(stored);
-        }
-
-        // Initial Migration: If window.quizData exists (from quizData.js), use it
-        if (window.quizData) {
+        // Seeding / Migration Logic
+        if (!Storage.cache.quizData && window.quizData) {
+            console.log("🌱 [DataManager] Seeding Initial Quiz Data...");
             this.saveQuizData(window.quizData);
-            return window.quizData;
         }
-
-        // Fallback
-        this.saveQuizData(INITIAL_DATA);
-        return INITIAL_DATA;
     },
 
-    /**
-     * Saves the quiz data to localStorage.
-     * @param {Object} data - The data to save.
-     */
-    saveQuizData: function (data) {
-        localStorage.setItem(DATA_KEY, JSON.stringify(data));
-        // Update runtime global if used
-        if (window.quizData) window.quizData = data;
+    // --- Quiz Data ---
+    getQuizData: function() {
+        // Fallback to window.quizData if cache is empty (first load before seed)
+        return Storage.cache.quizData || window.quizData || {};
     },
 
-    // --- User Management ---
-
-    /**
-     * Retrieves the list of users.
-     * @returns {Array.<Object>} Array of user objects.
-     */
-    getUsers: function () {
-        return JSON.parse(localStorage.getItem(USERS_KEY)) || [];
+    saveQuizData: function(data) {
+        Storage.cache.quizData = data;
+        Storage.put(STORES.SYSTEM, { key: 'quizData', value: data });
     },
 
-    /**
-     * Saves the list of users.
-     * @param {Array.<Object>} users - The array of user objects.
-     */
-    saveUsers: function (users) {
-        localStorage.setItem(USERS_KEY, JSON.stringify(users));
+    // --- Users ---
+    getUsers: function() {
+        return Storage.cache.users || [];
     },
 
-    /**
-     * Resets points for a specific user or all users.
-     * @param {string} username - The username to reset, or 'ALL'.
-     * @returns {Array.<Object>} The updated users list.
-     */
-    resetUserPoints: function (username) {
-        const users = this.getUsers();
+    saveUsers: function(users) {
+        Storage.cache.users = users;
+        // Batch update implies rewriting logic.
+        // For simplicity/robustness, we'll clear and rewrite or put individually.
+        // Given 'users' is an array in App State, let's treat it as the source of truth.
+        // But IDB stores individual users.
+        // Optimization: We should update individual users, but the current app saves the WHOLE array.
+        // We will loop and put.
+        const tx = Storage.db.transaction(STORES.USERS, 'readwrite');
+        const store = tx.objectStore(STORES.USERS);
+        users.forEach(u => store.put(u));
+    },
+
+    // Helper to save single user (better performance)
+    saveUser: function(user) {
+        // Update cache
+        const idx = Storage.cache.users.findIndex(u => u.username === user.username);
+        if (idx >= 0) Storage.cache.users[idx] = user;
+        else Storage.cache.users.push(user);
+
+        // Update DB
+        Storage.put(STORES.USERS, user);
+    },
+
+    deleteAllBotUsers: function() {
+        const keep = Storage.cache.users.filter(u => !u.isBot);
+        Storage.cache.users = keep;
+
+        // In IDB, we have to delete them.
+        // This is tricky without a "where" clause.
+        // We'll clear and re-add real users for safety.
+        Storage.clear(STORES.USERS).then(() => {
+            keep.forEach(u => Storage.put(STORES.USERS, u));
+        });
+
+        return keep;
+    },
+
+    // --- Posts (Feed) ---
+    getPosts: function() {
+        // Sort by timestamp desc
+        return Storage.cache.posts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    },
+
+    addPost: function(post) {
+        Storage.cache.posts.unshift(post);
+        Storage.put(STORES.POSTS, post);
+    },
+
+    savePosts: function(posts) {
+        // This usually implies a delete occurred
+        // We need to sync the list.
+        // Find diff or just clear/rewrite?
+        // Clear/rewrite is safer for prototype.
+        Storage.cache.posts = posts;
+        Storage.clear(STORES.POSTS).then(() => {
+             posts.forEach(p => Storage.put(STORES.POSTS, p));
+        });
+    },
+
+    // --- Chat ---
+    getChatHistory: function() {
+        // Limit to last 50?
+        return Storage.cache.chat.slice(-50);
+    },
+
+    addChatMessage: function(msg) {
+        // Ensure ID is set (if not auto-generated, but we set autoIncrement)
+        // Actually, app.js passes an ID usually.
+        Storage.cache.chat.push(msg);
+        Storage.put(STORES.CHAT, msg);
+    },
+
+    // --- User Management (Extended) ---
+    resetUserPoints: function(username) {
         if (username === 'ALL') {
-            users.forEach(u => {
+            Storage.cache.users.forEach(u => {
                 u.points = 0;
                 u.level = 1;
-                // Keep history? Maybe reset accuracy too?
                 u.accuracy = 0;
             });
+            this.saveUsers(Storage.cache.users);
         } else {
-            const user = users.find(u => u.username === username);
+            const user = Storage.cache.users.find(u => u.username === username);
             if (user) {
                 user.points = 0;
                 user.level = 1;
                 user.accuracy = 0;
+                this.saveUser(user);
             }
         }
-        this.saveUsers(users);
-        return users;
     },
 
-    /**
-     * Deletes a user by username.
-     * @param {string} username - The username to delete.
-     * @returns {Array.<Object>} The updated users list.
-     */
-    deleteUser: function (username) {
-        let users = this.getUsers();
-        users = users.filter(u => u.username !== username);
-        this.saveUsers(users);
-        return users;
+    deleteUser: function(username) {
+        Storage.cache.users = Storage.cache.users.filter(u => u.username !== username);
+        // Async delete from IDB
+        Storage.delete(STORES.USERS, username);
     },
 
-    /**
-     * Deletes all bot users (cleanup utility).
-     * @returns {Array.<Object>} The updated users list.
-     */
-    deleteAllBotUsers: function () {
-        let users = this.getUsers();
-        users = users.filter(u => !u.isBot);
-        this.saveUsers(users);
-        return users;
-    },
-
-    // --- Content Management Helpers ---
-
-    /**
-     * Adds a new subject.
-     * @param {string} name - The name of the subject.
-     * @returns {boolean} True if successful, false if it already exists.
-     */
-    addSubject: function (name) {
+    // --- Content Management (Restored) ---
+    addSubject: function(name) {
         const data = this.getQuizData();
         if (!data[name]) {
             data[name] = {};
@@ -141,12 +283,7 @@ const DataManager = {
         return false;
     },
 
-    /**
-     * Deletes a subject.
-     * @param {string} name - The name of the subject.
-     * @returns {boolean} True if successful.
-     */
-    deleteSubject: function (name) {
+    deleteSubject: function(name) {
         const data = this.getQuizData();
         if (data[name]) {
             delete data[name];
@@ -156,13 +293,7 @@ const DataManager = {
         return false;
     },
 
-    /**
-     * Adds a chapter to a subject.
-     * @param {string} subject - The subject name.
-     * @param {string} chapterName - The chapter name.
-     * @returns {boolean} True if successful.
-     */
-    addChapter: function (subject, chapterName) {
+    addChapter: function(subject, chapterName) {
         const data = this.getQuizData();
         if (data[subject] && !data[subject][chapterName]) {
             data[subject][chapterName] = [];
@@ -172,13 +303,7 @@ const DataManager = {
         return false;
     },
 
-    /**
-     * Deletes a chapter from a subject.
-     * @param {string} subject - The subject name.
-     * @param {string} chapterName - The chapter name.
-     * @returns {boolean} True if successful.
-     */
-    deleteChapter: function (subject, chapterName) {
+    deleteChapter: function(subject, chapterName) {
         const data = this.getQuizData();
         if (data[subject] && data[subject][chapterName]) {
             delete data[subject][chapterName];
@@ -188,21 +313,12 @@ const DataManager = {
         return false;
     },
 
-    /**
-     * Adds a question to a specific subject and chapter.
-     * @param {string} subject - The subject name.
-     * @param {string} chapter - The chapter name.
-     * @param {Object} questionObj - The question object.
-     * @returns {boolean} True if successful.
-     */
-    addQuestion: function (subject, chapter, questionObj) {
+    addQuestion: function(subject, chapter, questionObj) {
         const data = this.getQuizData();
         if (data[subject] && data[subject][chapter]) {
-            // Assign ID
             const existingIds = data[subject][chapter].map(q => q.id);
             const newId = existingIds.length > 0 ? Math.max(...existingIds) + 1 : 1;
-            questionObj.id = newId; // Ensure local ID uniqueness within chapter
-
+            questionObj.id = newId;
             data[subject][chapter].push(questionObj);
             this.saveQuizData(data);
             return true;
@@ -210,14 +326,7 @@ const DataManager = {
         return false;
     },
 
-    /**
-     * Deletes a question by ID.
-     * @param {string} subject - The subject name.
-     * @param {string} chapter - The chapter name.
-     * @param {number} questionId - The question ID.
-     * @returns {boolean} True if successful.
-     */
-    deleteQuestion: function (subject, chapter, questionId) {
+    deleteQuestion: function(subject, chapter, questionId) {
         const data = this.getQuizData();
         if (data[subject] && data[subject][chapter]) {
             data[subject][chapter] = data[subject][chapter].filter(q => q.id !== questionId);
@@ -227,14 +336,7 @@ const DataManager = {
         return false;
     },
 
-    /**
-     * Updates an existing question.
-     * @param {string} subject - The subject name.
-     * @param {string} chapter - The chapter name.
-     * @param {Object} updatedQ - The updated question object (must have id).
-     * @returns {boolean} True if successful.
-     */
-    updateQuestion: function (subject, chapter, updatedQ) {
+    updateQuestion: function(subject, chapter, updatedQ) {
         const data = this.getQuizData();
         if (data[subject] && data[subject][chapter]) {
             const idx = data[subject][chapter].findIndex(q => q.id === updatedQ.id);
@@ -245,8 +347,27 @@ const DataManager = {
             }
         }
         return false;
+    },
+
+    // --- Seeds ---
+    seedInitialContent: function() {
+        // If empty feed, seed it
+        if (Storage.cache.posts.length === 0) {
+            const seedPosts = [
+                {
+                    id: 'seed-1',
+                    username: 'system_admin',
+                    name: 'System Administrator',
+                    avatar: null,
+                    content: 'Welcome to Global Nexus Phase 2. The architecture has been upgraded.',
+                    timestamp: new Date().toISOString(),
+                    likes: 999,
+                    isHighlight: true
+                }
+            ];
+            seedPosts.forEach(p => this.addPost(p));
+        }
     }
 };
 
-// Expose to window for app.js
 window.DataManager = DataManager;

@@ -49,10 +49,6 @@ const heroDrone = document.getElementById('hero-drone');
 /**
  * Global application state.
  * @type {Object}
- * @property {Object|null} currentUser - The currently logged-in user.
- * @property {string} currentView - The ID of the current view.
- * @property {Object} quiz - The current quiz state.
- * @property {Array.<Object>} users - The list of all users.
  */
 const STATE = {
     currentUser: null,
@@ -68,7 +64,9 @@ const STATE = {
         timer: 0,
         timerInterval: null
     },
-    users: DataManager.getUsers() // Use DataManager
+    users: [], // Initialized empty, populated in init()
+    draftImage: null, // For post creation
+    draftPoll: false   // For poll creation toggle
 };
 
 // --- Initialization ---
@@ -76,23 +74,30 @@ const STATE = {
 /**
  * Initializes the application.
  */
-function init() {
-    // Ensure data is migrated/loaded
-    DataManager.getQuizData();
+async function init() {
+    try {
+        console.log("🚀 System Initialization Started...");
 
-    // Remove all bot users on every load
-    DataManager.deleteAllBotUsers();
+        // Initialize DataManager (Loads DB into Cache)
+        await DataManager.init();
 
-    // Reload users after cleanup
-    STATE.users = DataManager.getUsers();
+        // Hydrate State
+        STATE.users = DataManager.getUsers();
 
-    setupEventListeners();
+        // Remove all bot users on every load to ensure clean state
+        DataManager.deleteAllBotUsers();
+        STATE.users = DataManager.getUsers(); // Refresh state after cleanup
 
-    // Check if user session exists (optional, for now just force login)
-    // if (localStorage.getItem('quizzup_session')) ...
+        setupEventListeners();
 
-    // Initialize Community Content (Seed)
-    DataManager.seedInitialContent();
+        // Initialize Community Content (Seed)
+        DataManager.seedInitialContent();
+
+        console.log("✅ System Ready.");
+    } catch (error) {
+        console.error("❌ System Initialization Failed:", error);
+        alert("Critical System Error: Database Initialization Failed. Please refresh.");
+    }
 }
 
 /**
@@ -253,7 +258,9 @@ function updateTopBar() {
  */
 function renderDashboard() {
     const user = STATE.currentUser;
-    const rank = [...STATE.users].sort((a, b) => b.points - a.points).findIndex(u => u.username === user.username) + 1;
+    // Recalculate rank dynamically
+    const allUsers = DataManager.getUsers();
+    const rank = [...allUsers].sort((a, b) => b.points - a.points).findIndex(u => u.username === user.username) + 1;
 
     // Check if DataManager needs reload
     const subjects = Object.keys(DataManager.getQuizData());
@@ -600,9 +607,8 @@ function finishQuiz() {
     STATE.currentUser.accuracy = oldAcc === 0 ? accuracy : Math.round((oldAcc + accuracy) / 2);
 
     // Save
-    const uIdx = STATE.users.findIndex(u => u.username === STATE.currentUser.username);
-    STATE.users[uIdx] = STATE.currentUser;
-    saveUsers();
+    // We need to update this specific user in the DB
+    DataManager.saveUser(STATE.currentUser); // New optimized method
     updateTopBar();
 
     // Save History
@@ -720,7 +726,8 @@ window.renderReviewMode = function () {
 };
 
 function renderLeaderboard() {
-    const sorted = [...STATE.users].sort((a, b) => (b.points || 0) - (a.points || 0));
+    // Need fresh users data
+    const sorted = [...DataManager.getUsers()].sort((a, b) => (b.points || 0) - (a.points || 0));
 
     mainContent.innerHTML = `
         <div class="glass-card fade-in" style="padding: 0; overflow: hidden;">
@@ -763,7 +770,7 @@ function renderLeaderboard() {
 }
 
 function inspectUser(username) {
-    const user = STATE.users.find(u => u.username === username);
+    const user = DataManager.getUsers().find(u => u.username === username);
     if (!user) return;
 
     document.getElementById('inspect-name').textContent = user.name;
@@ -886,9 +893,8 @@ function renderProfile() {
                     const reader = new FileReader();
                     reader.onload = (ev) => {
                         STATE.currentUser.profilePic = ev.target.result;
-                        const idx = STATE.users.findIndex(u => u.username === STATE.currentUser.username);
-                        STATE.users[idx] = STATE.currentUser;
-                        saveUsers();
+                        // Use DataManager.saveUser
+                        DataManager.saveUser(STATE.currentUser);
                         updateTopBar();
                         renderProfile(); // re-render
                     };
@@ -928,7 +934,8 @@ function setupEventListeners() {
             return;
         }
 
-        const found = STATE.users.find(user => user.username === u && user.password === p);
+        const users = DataManager.getUsers();
+        const found = users.find(user => user.username === u && user.password === p);
 
         if (found) {
             login(found);
@@ -947,7 +954,8 @@ function setupEventListeners() {
             return;
         }
 
-        if (STATE.users.find(user => user.username === u)) {
+        const users = DataManager.getUsers();
+        if (users.find(user => user.username === u)) {
             document.getElementById('signup-error').textContent = 'Username taken.';
             return;
         }
@@ -961,8 +969,8 @@ function setupEventListeners() {
             profilePic: null
         };
 
-        STATE.users.push(newUser);
-        saveUsers();
+        DataManager.saveUser(newUser);
+        STATE.users = DataManager.getUsers();
 
         // Intro Sequence Logic
         runIntro(newUser);
@@ -1027,26 +1035,22 @@ window.saveProfileChanges = function () {
     if (nameInput.value) STATE.currentUser.name = nameInput.value;
     if (passInput.value && passInput.value.length >= 8) STATE.currentUser.password = passInput.value;
 
-    const idx = STATE.users.findIndex(u => u.username === STATE.currentUser.username);
-    STATE.users[idx] = STATE.currentUser;
-    saveUsers();
+    DataManager.saveUser(STATE.currentUser);
 
     updateTopBar();
     renderProfile();
     alert("Profile Updated Successfully.");
 };
 
-// Start
-init();
 
 /* =========================================
-   COMMUNITY HUB & CHAT SYSTEM (Corrected & Re-applied)
+   COMMUNITY HUB & CHAT SYSTEM
    ========================================= */
 
 function renderCommunity() {
     pageTitle.textContent = "Global Nexus";
 
-    // Get stored data via DataManager
+    // Get stored data via DataManager (Now returns cached sync data)
     const posts = DataManager.getPosts();
     const chat = DataManager.getChatHistory();
 
@@ -1062,10 +1066,30 @@ function renderCommunity() {
                         </div>
                         <input type="text" id="post-input" placeholder="Share your achievement or thought..." class="post-input">
                     </div>
+
+                    <!-- Image Preview -->
+                    <div id="post-preview-area" class="hidden" style="margin-bottom: 1rem; position: relative; width: fit-content;">
+                        <img id="post-preview-img" src="" style="max-width: 100%; max-height: 250px; border-radius: 8px; border: 1px solid var(--border-glass);">
+                        <button onclick="clearDraftImage()" style="position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.7); color: white; border: none; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s;">×</button>
+                    </div>
+
+                    <!-- Poll Creator (Hidden) -->
+                    <div id="poll-creator-area" class="hidden" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-glass); margin-bottom: 1rem;">
+                        <div style="margin-bottom: 0.8rem; font-size: 0.9rem; color: var(--text-muted); font-weight: 600;">Create Poll</div>
+                        <input type="text" class="glass-input poll-option-input" placeholder="Option 1" style="margin-bottom: 0.5rem;">
+                        <input type="text" class="glass-input poll-option-input" placeholder="Option 2" style="margin-bottom: 0.5rem;">
+                        <div id="poll-extra-options"></div>
+                        <div style="margin-top: 0.5rem; display: flex; justify-content: space-between;">
+                            <button class="secondary-btn small-btn" onclick="addPollOptionInput()" style="font-size: 0.8rem; padding: 0.4rem 0.8rem;">+ Add Option</button>
+                            <button class="text-btn" onclick="cancelPollCreation()" style="color: var(--danger); font-size: 0.8rem;">Cancel Poll</button>
+                        </div>
+                    </div>
+
                     <div class="flex-center" style="justify-content: space-between;">
                         <div class="post-actions">
-                            <button class="icon-btn" title="Attach Image">📷</button>
-                            <button class="icon-btn" title="Add Poll">📊</button>
+                            <button class="icon-btn" title="Attach Image" onclick="document.getElementById('post-image-upload').click()">📷</button>
+                            <input type="file" id="post-image-upload" hidden accept="image/*" onchange="handleImageUpload(event)">
+                            <button class="icon-btn" title="Add Poll" onclick="togglePollCreator()">📊</button>
                         </div>
                         <button class="primary-btn small-btn" onclick="submitPost()">Post Update</button>
                     </div>
@@ -1082,7 +1106,7 @@ function renderCommunity() {
             <div class="chat-section">
                 <div class="glass-card chat-container">
                     <div class="chat-header">
-                        <h3>⚡ Live Comms <span style="font-size:0.8rem; opacity:0.7;">• ${STATE.users.length * 3} Online</span></h3>
+                        <h3>⚡ Live Comms <span style="font-size:0.8rem; opacity:0.7;">• ${DataManager.getUsers().length} Online</span></h3>
                         <div class="live-indicator"><span class="blink-dot"></span> Online</div>
                     </div>
                     
@@ -1104,8 +1128,148 @@ function renderCommunity() {
     if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
 }
 
+// --- Poll Helpers ---
+window.togglePollCreator = function() {
+    const area = document.getElementById('poll-creator-area');
+    area.classList.toggle('hidden');
+    STATE.draftPoll = !area.classList.contains('hidden');
+
+    // Clear image if poll is active (Mutually exclusive? No, why not both? Okay, let's allow both or enforce one)
+    // For simplicity, let's allow both.
+};
+
+window.addPollOptionInput = function() {
+    const extra = document.getElementById('poll-extra-options');
+    const count = document.querySelectorAll('.poll-option-input').length + 1;
+    if (count > 4) {
+        alert("Max 4 options allowed.");
+        return;
+    }
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'glass-input poll-option-input';
+    input.placeholder = `Option ${count}`;
+    input.style.marginBottom = '0.5rem';
+    extra.appendChild(input);
+};
+
+window.cancelPollCreation = function() {
+    STATE.draftPoll = false;
+    document.getElementById('poll-creator-area').classList.add('hidden');
+    // Clear inputs
+    document.querySelectorAll('.poll-option-input').forEach(i => i.value = '');
+    document.getElementById('poll-extra-options').innerHTML = '';
+};
+
+window.votePoll = function(postId, optionId) {
+    let posts = DataManager.getPosts();
+    const postIdx = posts.findIndex(p => p.id === postId);
+    if (postIdx === -1) return;
+
+    const post = posts[postIdx];
+
+    // Security check (already voted?)
+    if (post.pollOptions.some(opt => opt.votes.includes(STATE.currentUser.username))) return;
+
+    // Add vote
+    const opt = post.pollOptions.find(o => o.id === optionId);
+    if (opt) {
+        opt.votes.push(STATE.currentUser.username);
+        // Save
+        DataManager.savePosts(posts); // Save all posts (inefficient but works for prototype)
+        renderCommunity();
+    }
+};
+
+window.handleImageUpload = function(e) {
+    const file = e.target.files[0];
+    if(!file) return;
+
+    if (!file.type.startsWith('image/')) {
+        alert("Please upload an image file.");
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        const img = new Image();
+        img.src = ev.target.result;
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            const MAX_WIDTH = 800;
+            let width = img.width;
+            let height = img.height;
+
+            if (width > MAX_WIDTH) {
+                height *= MAX_WIDTH / width;
+                width = MAX_WIDTH;
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            ctx.drawImage(img, 0, 0, width, height);
+
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+            STATE.draftImage = dataUrl;
+
+            const previewArea = document.getElementById('post-preview-area');
+            const previewImg = document.getElementById('post-preview-img');
+            previewImg.src = dataUrl;
+            previewArea.classList.remove('hidden');
+        };
+    };
+    reader.readAsDataURL(file);
+};
+
+window.clearDraftImage = function() {
+    STATE.draftImage = null;
+    document.getElementById('post-preview-area').classList.add('hidden');
+    document.getElementById('post-image-upload').value = '';
+};
+
 function renderPostHTML(post) {
     const isMe = post.username === STATE.currentUser.username;
+
+    // Poll Rendering Logic
+    let pollHTML = '';
+    if (post.type === 'poll') {
+        const totalVotes = post.pollOptions.reduce((acc, opt) => acc + opt.votes.length, 0);
+        const userVotedOption = post.pollOptions.find(opt => opt.votes.includes(STATE.currentUser.username));
+
+        pollHTML = `<div class="poll-container" style="margin-top: 1rem; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 8px;">`;
+
+        post.pollOptions.forEach(opt => {
+            const percent = totalVotes === 0 ? 0 : Math.round((opt.votes.length / totalVotes) * 100);
+            const isSelected = userVotedOption && userVotedOption.id === opt.id;
+
+            if (userVotedOption) {
+                // Show Results
+                pollHTML += `
+                    <div class="poll-result-row ${isSelected ? 'voted' : ''}" style="margin-bottom: 0.8rem;">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 0.3rem;">
+                            <span style="font-weight: 500; color: var(--text-primary);">${opt.text} ${isSelected ? '✅' : ''}</span>
+                            <span style="font-family: var(--font-mono); color: var(--text-muted);">${percent}%</span>
+                        </div>
+                        <div style="height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden;">
+                            <div style="height: 100%; width: ${percent}%; background: ${isSelected ? 'var(--success)' : 'var(--primary)'}; transition: width 0.5s ease;"></div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Show Vote Buttons
+                pollHTML += `
+                    <button class="secondary-btn" onclick="votePoll('${post.id}', ${opt.id})" style="display: block; width: 100%; margin-bottom: 0.5rem; text-align: left; position: relative; overflow: hidden;">
+                        ${opt.text}
+                    </button>
+                `;
+            }
+        });
+
+        pollHTML += `<div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.8rem; text-align: right;">${totalVotes} votes</div></div>`;
+    }
+
     return `
         <div class="glass-card post-card ${post.isHighlight ? 'highlight-post' : ''}">
             <div class="post-header">
@@ -1121,7 +1285,11 @@ function renderPostHTML(post) {
                 ${isMe ? `<button class="delete-post-btn" onclick="deletePost('${post.id}')">×</button>` : ''}
             </div>
             <div class="post-content">
-                ${post.content}
+                <div style="margin-bottom: 0.8rem;">${post.content}</div>
+                ${post.image ? `<div style="margin-top: 0.5rem; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-glass);">
+                    <img src="${post.image}" style="width: 100%; max-height: 400px; object-fit: cover; display: block;">
+                </div>` : ''}
+                ${pollHTML}
             </div>
             <div class="post-footer">
                 <button class="reaction-btn" onclick="likePost(this)">❤️ ${post.likes || 0}</button>
@@ -1146,7 +1314,9 @@ function renderChatHTML(msg) {
 window.submitPost = function () {
     const input = document.getElementById('post-input');
     const content = input.value.trim();
-    if (!content) return;
+
+    // Validation
+    if (!content && !STATE.draftImage && !STATE.draftPoll) return;
 
     const newPost = {
         id: Date.now().toString(),
@@ -1154,19 +1324,41 @@ window.submitPost = function () {
         name: STATE.currentUser.name,
         avatar: STATE.currentUser.profilePic,
         content: content,
+        image: STATE.draftImage || null,
         timestamp: new Date().toISOString(),
         likes: 0
     };
 
+    if (STATE.draftPoll) {
+        const inputs = document.querySelectorAll('.poll-option-input');
+        const options = Array.from(inputs).map(i => i.value.trim()).filter(v => v);
+
+        if (options.length < 2) {
+            alert("Poll must have at least 2 options.");
+            return;
+        }
+
+        if (!content) {
+            if (!content) newPost.content = "Poll:"; // Default text
+        }
+
+        newPost.type = 'poll';
+        newPost.pollOptions = options.map((opt, i) => ({ id: i, text: opt, votes: [] }));
+    }
+
     DataManager.addPost(newPost);
     input.value = '';
+
+    clearDraftImage();
+    cancelPollCreation();
+
     renderCommunity(); // Re-render
 };
 
 window.deletePost = function (id) {
     let posts = DataManager.getPosts();
     posts = posts.filter(p => p.id !== id);
-    DataManager.savePosts(posts);
+    DataManager.savePosts(posts); // This calls IDB rewrite
     renderCommunity();
 };
 
@@ -1197,10 +1389,10 @@ window.sendChatMessage = function () {
         chatBox.scrollTop = chatBox.scrollHeight;
     }
 
-    // Simulate Bot Reply
+    // Trigger Bot Reply with Typing Indicator
     setTimeout(() => {
-        simulateBotReply();
-    }, 2000 + Math.random() * 3000);
+        triggerBotReply();
+    }, 1000);
 };
 
 function timeAgo(dateString) {
@@ -1226,24 +1418,51 @@ const BOT_MESSAGES = [
     "Who is top of the leaderboard now?"
 ];
 
-function simulateBotReply() {
+function triggerBotReply() {
     const name = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
     const text = BOT_MESSAGES[Math.floor(Math.random() * BOT_MESSAGES.length)];
+    const delay = 1500 + Math.random() * 2000;
 
-    const msg = {
-        username: 'bot_' + name.toLowerCase(),
-        name: name,
-        text: text,
-        timestamp: new Date().toISOString()
-    };
-
-    DataManager.addChatMessage(msg);
-
+    // UI Feedback (Typing Indicator)
+    let typingEl = null;
     if (STATE.currentView === 'community') {
         const chatBox = document.getElementById('chat-messages');
         if (chatBox) {
-            chatBox.innerHTML += renderChatHTML(msg);
+            const typingId = 'typing-' + Date.now();
+            // Using a simple message structure for typing indicator
+            chatBox.insertAdjacentHTML('beforeend', `
+                <div id="${typingId}" class="chat-message">
+                    <div class="chat-bubble" style="color: var(--text-muted); font-size: 0.8rem; padding: 0.5rem 0.8rem;">
+                        <span style="font-weight:600;">${name}</span> is typing...
+                    </div>
+                </div>
+            `);
             chatBox.scrollTop = chatBox.scrollHeight;
+            typingEl = document.getElementById(typingId);
         }
     }
+
+    setTimeout(() => {
+        if (typingEl) typingEl.remove();
+
+        const msg = {
+            username: 'bot_' + name.toLowerCase(),
+            name: name,
+            text: text,
+            timestamp: new Date().toISOString()
+        };
+
+        DataManager.addChatMessage(msg);
+
+        if (STATE.currentView === 'community') {
+            const chatBox = document.getElementById('chat-messages');
+            if (chatBox) {
+                chatBox.innerHTML += renderChatHTML(msg);
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
+        }
+    }, delay);
 }
+
+// Run Initialization
+init();
