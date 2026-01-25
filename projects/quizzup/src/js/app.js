@@ -1162,34 +1162,6 @@ async function renderCommunity() {
     window.chatScroller.setData(chat);
 }
 
-function renderPostHTML(post) {
-    const isMe = post.username === STATE.currentUser.username;
-    return `
-        <div class="glass-card post-card ${post.isHighlight ? 'highlight-post' : ''}">
-            <div class="post-header">
-                <div class="flex-center" style="gap: 0.8rem; justify-content: flex-start;">
-                    <div class="avatar-small">
-                         ${post.avatar ? `<img src="${post.avatar}">` : post.name.charAt(0)}
-                    </div>
-                    <div>
-                        <div class="post-author">${post.name} ${isMe ? '(You)' : ''}</div>
-                        <div class="post-time">${timeAgo(post.timestamp)}</div>
-                    </div>
-                </div>
-                ${isMe ? `<button class="delete-post-btn" onclick="deletePost('${post.id}')">×</button>` : ''}
-            </div>
-            <div class="post-content">
-                ${post.content}
-                ${post.image ? `<img src="${post.image}" style="max-width:100%; border-radius:8px; margin-top:1rem;">` : ''}
-            </div>
-            <div class="post-footer">
-                <button class="reaction-btn" onclick="likePost(this)">❤️ ${post.likes || 0}</button>
-                <button class="reaction-btn">💬 Comment</button>
-            </div>
-        </div>
-    `;
-}
-
 function renderChatHTML(msg) {
     const isMe = msg.username === STATE.currentUser.username;
     return `
@@ -1245,6 +1217,7 @@ window.submitPost = async function () {
     };
 
     await DataManager.addPost(newPost); // Async add
+    window.RealTime.broadcast('POST_ADDED', newPost);
 
     input.value = '';
     clearImageUpload();
@@ -1276,6 +1249,7 @@ window.sendChatMessage = async function () {
     };
 
     await DataManager.addChatMessage(msg);
+    window.RealTime.broadcast('CHAT_SENT', msg);
     input.value = '';
 
     // Optimistic Update
@@ -1335,3 +1309,150 @@ function simulateBotReply() {
         }
     }
 }
+
+/* =========================================
+   PHASE 3: INTERACTION ENGINE (MANUAL INJECT)
+   ========================================= */
+
+window.likePost = async function (btn) {
+    btn.classList.add('active');
+    btn.innerHTML = btn.innerHTML.replace('❤️', '💖');
+
+    // Heuristic: Find ID from data attribute or context
+    let postId = btn.dataset.id;
+    if (!postId) return;
+
+    let posts = await DataManager.getPosts();
+    const postIndex = posts.findIndex(p => p.id === postId);
+
+    if (postIndex !== -1) {
+        posts[postIndex].likes++;
+        await DataManager.savePosts(posts);
+        window.RealTime.broadcast('LIKE_UPDATED', { postId, newLikes: posts[postIndex].likes });
+        btn.innerHTML = `❤️ ${posts[postIndex].likes}`;
+    }
+};
+
+window.toggleComments = function (postId) {
+    const section = document.getElementById(`comments-${postId}`);
+    if (section) {
+        section.classList.toggle('hidden');
+        if (!section.classList.contains('hidden')) {
+            const input = section.querySelector('.comment-input');
+            if (input) input.focus();
+        }
+    }
+};
+
+window.submitComment = async function (postId) {
+    const input = document.getElementById(`comment-input-${postId}`);
+    if (!input) return;
+    const text = input.value.trim();
+    if (!text) return;
+
+    let posts = await DataManager.getPosts();
+    const postIndex = posts.findIndex(p => p.id === postId);
+
+    if (postIndex !== -1) {
+        const post = posts[postIndex];
+        if (!post.comments) post.comments = [];
+
+        const newComment = {
+            id: Date.now().toString(),
+            user: STATE.currentUser.name,
+            text: text,
+            time: new Date().toISOString()
+        };
+
+        post.comments.push(newComment);
+        await DataManager.savePosts(posts);
+
+        const list = document.getElementById(`comment-list-${postId}`);
+        if (list) {
+            list.insertAdjacentHTML('beforeend', `
+            <div class="comment-item">
+                <div class="avatar-small" style="width:24px; height:24px; font-size:0.7rem;">${newComment.user.charAt(0)}</div>
+                <div class="comment-bubble">
+                    <div class="comment-author">${newComment.user}</div>
+                    <div>${newComment.text}</div>
+                </div>
+            </div>`);
+        }
+        input.value = '';
+    }
+};
+
+// OVERWRITE RENDER FUNCTION TO ENSURE COMMENTS ARE SEEN
+renderPostHTML = function (post) {
+    const isMe = post.username === STATE.currentUser.username;
+    const commentCount = post.comments ? post.comments.length : 0;
+
+    return `
+        <div class="glass-card post-card ${post.isHighlight ? 'highlight-post' : ''}">
+            <div class="post-header">
+                <div class="flex-center" style="gap: 0.8rem; justify-content: flex-start;">
+                    <div class="avatar-small">
+                         ${post.avatar ? `<img src="${post.avatar}">` : post.name.charAt(0)}
+                    </div>
+                    <div>
+                        <div class="post-author">${post.name} ${isMe ? '(You)' : ''}</div>
+                        <div class="post-time">${timeAgo(post.timestamp)}</div>
+                    </div>
+                </div>
+                ${isMe ? `<button class="delete-post-btn" onclick="deletePost('${post.id}')">×</button>` : ''}
+            </div>
+            <div class="post-content">
+                ${post.content}
+                ${post.image ? `<img src="${post.image}" style="max-width:100%; border-radius:8px; margin-top:1rem;">` : ''}
+            </div>
+            
+            ${post.type === 'poll' ? renderPollWidget(post) : ''}
+
+            <div class="post-footer">
+                <button class="reaction-btn" data-id="${post.id}" onclick="likePost(this)">❤️ ${post.likes || 0}</button>
+                <button class="reaction-btn" onclick="toggleComments('${post.id}')">💬 ${commentCount > 0 ? commentCount + ' Replies' : 'Reply'}</button>
+            </div>
+
+            <div id="comments-${post.id}" class="comments-section ${commentCount > 0 ? '' : 'hidden'}">
+                 <div id="comment-list-${post.id}">
+                    ${post.comments ? post.comments.map(c => `
+                    <div class="comment-item">
+                        <div class="avatar-small" style="width:24px; height:24px; font-size:0.7rem;">${c.user.charAt(0)}</div>
+                        <div class="comment-bubble">
+                            <div class="comment-author">${c.user}</div>
+                            <div>${c.text}</div>
+                        </div>
+                    </div>`).join('') : ''}
+                 </div>
+                 <div class="comment-input-area">
+                    <input type="text" id="comment-input-${post.id}" class="comment-input" placeholder="Write a reply...">
+                    <button class="primary-btn small-btn" onclick="submitComment('${post.id}')">Send</button>
+                 </div>
+            </div>
+        </div>
+    `;
+};
+
+// Helper for Polls
+function renderPollWidget(post) {
+    const totalVotes = post.options.reduce((a, b) => a + b.votes, 0) || 1;
+    return `
+        <div class="poll-widget" style="margin-bottom:1rem;">
+           <div class="poll-options">
+                ${post.options.map((opt, i) => {
+        const pct = totalVotes === 1 && post.options.every(o => o.votes === 0) ? 0 : Math.round((opt.votes / totalVotes) * 100);
+        return `
+                    <div class="poll-option" onclick="votePoll('${post.id}', ${i})">
+                        <div class="poll-bar" style="width: ${pct}%"></div>
+                        <span style="position:relative; z-index:2;">${opt.text}</span>
+                        <span style="position:relative; z-index:2; float:right;">${pct}%</span>
+                    </div>
+                    `;
+    }).join('')}
+            </div>
+        </div>
+    `;
+}
+
+// Start Broadcast
+if (window.RealTime) window.RealTime.broadcast('POST_ADDED', {});
