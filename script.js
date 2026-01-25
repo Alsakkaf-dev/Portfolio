@@ -25,7 +25,7 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 // Form submission
 const form = document.querySelector('.contact-form');
 if (form) {
-    form.addEventListener('submit', function (e) {
+    form.addEventListener('submit', async function (e) {
         e.preventDefault();
         const btn = this.querySelector('button[type="submit"]');
         const originalText = btn.textContent;
@@ -33,14 +33,31 @@ if (form) {
         btn.textContent = 'Sending...';
         btn.disabled = true;
 
+        const formData = new FormData(this);
+
+        try {
+            const response = await fetch(this.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                btn.textContent = '✓ Message Sent!';
+                this.reset();
+            } else {
+                btn.textContent = '✖ Error Sending';
+            }
+        } catch (error) {
+            btn.textContent = '✖ Technical Error';
+        }
+
         setTimeout(() => {
-            btn.textContent = '✓ Message Sent!';
-            setTimeout(() => {
-                btn.textContent = originalText;
-                btn.disabled = false;
-                form.reset();
-            }, 2000);
-        }, 1000);
+            btn.textContent = originalText;
+            btn.disabled = false;
+        }, 3000);
     });
 }
 
