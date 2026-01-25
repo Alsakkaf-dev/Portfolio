@@ -77,51 +77,48 @@ const STATE = {
  * Initializes the application.
  */
 function init() {
-    // Ensure data is migrated/loaded
-    DataManager.getQuizData();
+    try {
+        console.log("🚀 Initializing Application...");
 
-    // Remove all bot users on every load
-    DataManager.deleteAllBotUsers();
+        // 1. Setup UI Listeners FIRST so buttons always work
+        setupEventListeners();
 
-    // Reload users after cleanup
-    STATE.users = DataManager.getUsers();
+        // 2. Data Loading
+        DataManager.getQuizData();
+        DataManager.deleteAllBotUsers();
+        STATE.users = DataManager.getUsers();
 
-    setupEventListeners();
+        // 3. Seed Content
+        DataManager.seedInitialContent();
 
-    // Check if user session exists (optional, for now just force login)
-    // if (localStorage.getItem('quizzup_session')) ...
+        // 4. Factory Reset Check
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('reset') === 'true') {
+            DataManager.factoryReset();
+            window.history.replaceState({}, document.title, window.location.pathname);
+            return;
+        }
 
-    // Initialize Community Content (Seed)
-    DataManager.seedInitialContent();
-
-    // Check for Factory Reset Trigger
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('reset') === 'true') {
-        DataManager.factoryReset();
-        window.history.replaceState({}, document.title, window.location.pathname);
-        return;
-    }
-
-    // Session Restore
-    const savedSession = localStorage.getItem('quizzup_session');
-    if (savedSession) {
-        try {
-            const user = JSON.parse(savedSession);
-            // Verify user still exists in DB
-            const validUser = STATE.users.find(u => u.username === user.username);
-            if (validUser) {
-                // Update local object with latest stats
-                STATE.currentUser = validUser;
-                // Skip login screen
-                login(validUser);
-            } else {
-                // User deleted remotely?
+        // 5. Session Restore
+        const savedSession = localStorage.getItem('quizzup_session');
+        if (savedSession) {
+            try {
+                const user = JSON.parse(savedSession);
+                const validUser = STATE.users.find(u => u.username === user.username);
+                if (validUser) {
+                    STATE.currentUser = validUser;
+                    login(validUser);
+                } else {
+                    logout();
+                }
+            } catch (e) {
+                console.error("Session restore failed", e);
                 logout();
             }
-        } catch (e) {
-            console.error("Session restore failed", e);
-            logout();
         }
+    } catch (criticalError) {
+        console.error("CRITICAL INIT ERROR:", criticalError);
+        alert("System Initialization Failed. Check console.");
     }
 }
 
@@ -244,24 +241,32 @@ function logout() {
 }
 
 /**
- * Switches between login and signup forms.
+ * Switches between login and signup forms safely.
  * @param {string} type - 'login' or 'signup'.
  */
 function showAuthForm(type) {
+    const link = document.getElementById('switch-link');
+
     if (type === 'login') {
         loginForm.classList.remove('hidden');
         signupForm.classList.add('hidden');
         tabLogin.classList.add('active');
         tabSignup.classList.remove('active');
-        authSwitch.innerHTML = `Don't have an account? <span id="switch-link" style="color:var(--primary); cursor:pointer;">Sign Up</span>`;
+
+        // Update Text Safely
+        authSwitch.childNodes[0].nodeValue = "Don't have an account? ";
+        if (link) link.textContent = "Register Now";
+
     } else {
         loginForm.classList.add('hidden');
         signupForm.classList.remove('hidden');
         tabLogin.classList.remove('active');
         tabSignup.classList.add('active');
-        authSwitch.innerHTML = `Already have an account? <span id="switch-link" style="color:var(--primary); cursor:pointer;">Sign In</span>`;
+
+        // Update Text Safely
+        authSwitch.childNodes[0].nodeValue = "Already have an account? ";
+        if (link) link.textContent = "Sign In";
     }
-    document.getElementById('switch-link').addEventListener('click', () => showAuthForm(type === 'login' ? 'signup' : 'login'));
 }
 
 /**
