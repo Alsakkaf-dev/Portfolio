@@ -956,6 +956,31 @@ function setupEventListeners() {
     tabLogin.addEventListener('click', () => showAuthForm('login'));
     tabSignup.addEventListener('click', () => showAuthForm('signup'));
 
+    // Dynamic Auth Switch (Event Delegation)
+    authSwitch.addEventListener('click', (e) => {
+        if (e.target.id === 'switch-link') {
+            const current = loginForm.classList.contains('hidden') ? 'signup' : 'login';
+            showAuthForm(current === 'login' ? 'signup' : 'login');
+        }
+    });
+
+    // Password Toggle (Event Delegation)
+    document.querySelectorAll('.password-toggle').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const targetId = btn.dataset.target;
+            const input = document.getElementById(targetId);
+            if (input) {
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    btn.textContent = '🙈'; // Crossed eye
+                } else {
+                    input.type = 'password';
+                    btn.textContent = '👁️'; // Normal eye
+                }
+            }
+        });
+    });
+
     loginForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const u = document.getElementById('login-username').value;
