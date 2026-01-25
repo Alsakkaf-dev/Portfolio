@@ -140,7 +140,120 @@ function saveHistory(record) {
     localStorage.setItem(key, JSON.stringify(history));
 }
 
-// --- Navigation Engine ---
+// --- Event Listeners ---
+function setupEventListeners() {
+    // Nav
+    sidebarNavItems.forEach(btn => {
+        btn.addEventListener('click', () => navigateTo(btn.dataset.view));
+    });
+
+    mobileNavItems.forEach(btn => {
+        btn.addEventListener('click', () => navigateTo(btn.dataset.view));
+    });
+
+    if (logoutBtn) logoutBtn.addEventListener('click', logout);
+
+    // Auth
+    if (tabLogin) tabLogin.addEventListener('click', () => showAuthForm('login'));
+    if (tabSignup) tabSignup.addEventListener('click', () => showAuthForm('signup'));
+
+    // Dynamic Auth Switch (Event Delegation)
+    if (authSwitch) {
+        authSwitch.addEventListener('click', (e) => {
+            if (e.target.id === 'switch-link') {
+                const current = loginForm.classList.contains('hidden') ? 'signup' : 'login';
+                showAuthForm(current === 'login' ? 'signup' : 'login');
+            }
+        });
+    }
+
+    // Password Toggle (Event Delegation)
+    document.querySelectorAll('.password-toggle').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const targetId = btn.dataset.target;
+            const input = document.getElementById(targetId);
+            if (input) {
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    btn.textContent = '🙈'; // Crossed eye
+                } else {
+                    input.type = 'password';
+                    btn.textContent = '👁️'; // Normal eye
+                }
+            }
+        });
+    });
+
+    if (loginForm) {
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const u = document.getElementById('login-username').value;
+            const p = document.getElementById('login-password').value;
+
+            // Admin Backdoor
+            if (u === 'admin' && p === 'admin123') {
+                login({ username: 'admin', name: 'System Administrator', points: 99999, level: 99, isAdmin: true });
+                return;
+            }
+
+            const found = STATE.users.find(user => user.username === u && user.password === p);
+
+            if (found) {
+                login(found);
+            } else {
+                document.getElementById('login-error').textContent = 'Invalid credentials.';
+            }
+        });
+    }
+
+    if (signupForm) {
+        signupForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const u = document.getElementById('signup-username').value;
+            const p = document.getElementById('signup-password').value;
+
+            if (p.length < 8) {
+                document.getElementById('signup-error').textContent = 'Password must be at least 8 chars.';
+                return;
+            }
+
+            if (STATE.users.find(user => user.username === u)) {
+                document.getElementById('signup-error').textContent = 'Username taken.';
+                return;
+            }
+
+            const newUser = {
+                username: u,
+                name: u, // Default name
+                password: p,
+                points: 0,
+                level: 1,
+                profilePic: null
+            };
+
+            STATE.users.push(newUser);
+            saveUsers();
+
+            // Intro Sequence Logic
+            runIntro(newUser);
+        });
+    }
+
+    // Quiz Settings
+    if (closeSettingsBtn) closeSettingsBtn.addEventListener('click', () => settingsOverlay.classList.add('hidden'));
+    if (startQuizBtn) startQuizBtn.addEventListener('click', startQuiz);
+
+    typeOptions.forEach(opt => {
+        opt.addEventListener('click', () => {
+            typeOptions.forEach(o => o.classList.remove('selected'));
+            opt.classList.add('selected');
+            STATE.quiz.type = opt.dataset.type;
+        });
+    });
+
+    // Inspect
+    if (closeInspectBtn) closeInspectBtn.addEventListener('click', () => inspectOverlay.classList.add('hidden'));
+}
 
 /**
  * Navigates to a specific view.
@@ -945,113 +1058,7 @@ function renderProfile() {
 
 
 // --- Event Listeners ---
-function setupEventListeners() {
-    // Nav
-    sidebarNavItems.forEach(btn => {
-        btn.addEventListener('click', () => navigateTo(btn.dataset.view));
-    });
 
-    mobileNavItems.forEach(btn => {
-        btn.addEventListener('click', () => navigateTo(btn.dataset.view));
-    });
-
-    logoutBtn.addEventListener('click', logout);
-
-    // Auth
-    tabLogin.addEventListener('click', () => showAuthForm('login'));
-    tabSignup.addEventListener('click', () => showAuthForm('signup'));
-
-    // Dynamic Auth Switch (Event Delegation)
-    authSwitch.addEventListener('click', (e) => {
-        if (e.target.id === 'switch-link') {
-            const current = loginForm.classList.contains('hidden') ? 'signup' : 'login';
-            showAuthForm(current === 'login' ? 'signup' : 'login');
-        }
-    });
-
-    // Password Toggle (Event Delegation)
-    document.querySelectorAll('.password-toggle').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const targetId = btn.dataset.target;
-            const input = document.getElementById(targetId);
-            if (input) {
-                if (input.type === 'password') {
-                    input.type = 'text';
-                    btn.textContent = '🙈'; // Crossed eye
-                } else {
-                    input.type = 'password';
-                    btn.textContent = '👁️'; // Normal eye
-                }
-            }
-        });
-    });
-
-    loginForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const u = document.getElementById('login-username').value;
-        const p = document.getElementById('login-password').value;
-
-        // Admin Backdoor
-        if (u === 'admin' && p === 'admin123') {
-            login({ username: 'admin', name: 'System Administrator', points: 99999, level: 99, isAdmin: true });
-            return;
-        }
-
-        const found = STATE.users.find(user => user.username === u && user.password === p);
-
-        if (found) {
-            login(found);
-        } else {
-            document.getElementById('login-error').textContent = 'Invalid credentials.';
-        }
-    });
-
-    signupForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const u = document.getElementById('signup-username').value;
-        const p = document.getElementById('signup-password').value;
-
-        if (p.length < 8) {
-            document.getElementById('signup-error').textContent = 'Password must be at least 8 chars.';
-            return;
-        }
-
-        if (STATE.users.find(user => user.username === u)) {
-            document.getElementById('signup-error').textContent = 'Username taken.';
-            return;
-        }
-
-        const newUser = {
-            username: u,
-            name: u, // Default name
-            password: p,
-            points: 0,
-            level: 1,
-            profilePic: null
-        };
-
-        STATE.users.push(newUser);
-        saveUsers();
-
-        // Intro Sequence Logic
-        runIntro(newUser);
-    });
-
-    // Quiz Settings
-    closeSettingsBtn.addEventListener('click', () => settingsOverlay.classList.add('hidden'));
-    startQuizBtn.addEventListener('click', startQuiz);
-
-    typeOptions.forEach(opt => {
-        opt.addEventListener('click', () => {
-            typeOptions.forEach(o => o.classList.remove('selected'));
-            opt.classList.add('selected');
-            STATE.quiz.type = opt.dataset.type;
-        });
-    });
-
-    // Inspect
-    closeInspectBtn.addEventListener('click', () => inspectOverlay.classList.add('hidden'));
-}
 
 /**
  * Runs the intro animation sequence.
