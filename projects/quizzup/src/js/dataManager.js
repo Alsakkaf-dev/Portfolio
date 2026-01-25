@@ -309,8 +309,8 @@ const DataManager = {
         console.warn('⚠️ PERFORMING FACTORY RESET ⚠️');
         localStorage.removeItem(DATA_KEY);
         localStorage.removeItem(USERS_KEY);
-        localStorage.removeItem('quizzup_posts');
-        localStorage.removeItem('quizzup_chat');
+        localStorage.removeItem('quizzup_posts_v2');
+        localStorage.removeItem('quizzup_chat_v2');
 
         // Also clear history keys dynamically if possible, or just specific ones
         Object.keys(localStorage).forEach(key => {
@@ -338,7 +338,7 @@ window.DataManager = DataManager;
    ========================================= */
 
 const DB_CONFIG = {
-    name: 'QuizzUpDB',
+    name: 'QuizzUpDB_v2',
     version: 1,
     stores: {
         posts: { keyPath: 'id' },
@@ -420,11 +420,13 @@ class StorageEngine {
 }
 
 // Initialize Global Engine
+// Initialize Global Engine
 window.Storage = new StorageEngine();
 
 // --- Overwrite DataManager extensions to use Async Storage ---
 // Note: This is a 'Patch' approach. 
 // A real refactor would rewrite DataManager completely, but we will wrap for backward compatibility.
+// BUMPED TO V2 KEYS FOR FRESH START
 
 DataManager.getPosts = async function () {
     try {
@@ -432,7 +434,7 @@ DataManager.getPosts = async function () {
         // Sort by timestamp desc
         return posts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
     } catch (e) {
-        return JSON.parse(localStorage.getItem('quizzup_posts')) || []; // Fallback
+        return JSON.parse(localStorage.getItem('quizzup_posts_v2')) || []; // Fallback
     }
 };
 
@@ -440,10 +442,10 @@ DataManager.addPost = async function (post) {
     try {
         await window.Storage.add('posts', post);
         // Also keep localStorage sync for now (Hybrid Mode) for safety
-        let local = JSON.parse(localStorage.getItem('quizzup_posts')) || [];
+        let local = JSON.parse(localStorage.getItem('quizzup_posts_v2')) || [];
         local.unshift(post);
         if (local.length > 20) local.pop();
-        localStorage.setItem('quizzup_posts', JSON.stringify(local));
+        localStorage.setItem('quizzup_posts_v2', JSON.stringify(local));
     } catch (e) {
         console.error(e);
     }
@@ -454,7 +456,7 @@ DataManager.getChatHistory = async function () {
         const chat = await window.Storage.getAll('chat');
         return chat.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
     } catch (e) {
-        return JSON.parse(localStorage.getItem('quizzup_chat')) || [];
+        return JSON.parse(localStorage.getItem('quizzup_chat_v2')) || [];
     }
 };
 
@@ -462,10 +464,10 @@ DataManager.addChatMessage = async function (msg) {
     try {
         await window.Storage.add('chat', msg);
         // Hybrid Sync
-        let local = JSON.parse(localStorage.getItem('quizzup_chat')) || [];
+        let local = JSON.parse(localStorage.getItem('quizzup_chat_v2')) || [];
         local.push(msg);
         if (local.length > 50) local.shift();
-        localStorage.setItem('quizzup_chat', JSON.stringify(local));
+        localStorage.setItem('quizzup_chat_v2', JSON.stringify(local));
     } catch (e) {
         console.error(e);
     }
