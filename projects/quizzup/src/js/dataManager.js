@@ -245,8 +245,239 @@ const DataManager = {
             }
         }
         return false;
+    },
+
+    // --- Community & Social Data ---
+
+    getPosts: function () {
+        return JSON.parse(localStorage.getItem('quizzup_posts')) || [];
+    },
+
+    savePosts: function (posts) {
+        localStorage.setItem('quizzup_posts', JSON.stringify(posts));
+    },
+
+    addPost: function (post) {
+        let posts = this.getPosts();
+        posts.unshift(post);
+        // Limit to 50 posts to prevent overflow
+        if (posts.length > 50) posts.pop();
+        this.savePosts(posts);
+        return posts;
+    },
+
+    getChatHistory: function () {
+        return JSON.parse(localStorage.getItem('quizzup_chat')) || [];
+    },
+
+    saveChatHistory: function (chat) {
+        localStorage.setItem('quizzup_chat', JSON.stringify(chat));
+    },
+
+    addChatMessage: function (msg) {
+        let chat = this.getChatHistory();
+        chat.push(msg);
+        // Limit history to 50 messages
+        if (chat.length > 50) chat.shift();
+        this.saveChatHistory(chat);
+        return chat;
+    },
+
+    /**
+     * Seeds initial content if the feed is empty.
+     * Solves the "Blank Page" problem.
+     */
+    seedInitialContent: function () {
+        const posts = this.getPosts();
+        if (posts.length > 0) return; // Already populated
+
+        const initialPosts = [
+            {
+                id: 'sys_001',
+                username: 'system_admin',
+                name: 'System Admin',
+                avatar: null, // Default
+                content: '🚀 Welcome to the Global Nexus! Connect, share scores, and challenge top players here.',
+                timestamp: new Date().toISOString(),
+                likes: 42,
+                isHighlight: true
+            },
+            {
+                id: 'user_bot_1',
+                username: 'aria_dev',
+                name: 'Aria',
+                avatar: null,
+                content: 'Just cracked the O(n) solution for the Array rotation problem! DSA is tough but fun. 😅',
+                timestamp: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
+                likes: 12,
+                isHighlight: false
+            },
+            {
+                id: 'user_bot_2',
+                username: 'nexus_prime',
+                name: 'Nexus',
+                avatar: null,
+                content: 'Who is ready for the weekend Tournament? I am aiming for Top 3 this time.',
+                timestamp: new Date(Date.now() - 7200000).toISOString(), // 2 hours ago
+                likes: 8,
+                isHighlight: false
+            }
+        ];
+
+        this.savePosts(initialPosts);
+
+        // Also seed chat if empty
+        const chat = this.getChatHistory();
+        if (chat.length === 0) {
+            this.addChatMessage({
+                id: 'sys_chat_1',
+                username: 'system_bot',
+                name: 'System',
+                text: 'Global communication channel initialized. Online.',
+                timestamp: new Date().toISOString()
+            });
+        }
     }
 };
 
 // Expose to window for app.js
 window.DataManager = DataManager;
+
+/* =========================================
+   STORAGE ENGINE: INDEXED DB WRAPPER (JOLCE ARCHITECTURE)
+   ========================================= */
+
+const DB_CONFIG = {
+    name: 'QuizzUpDB',
+    version: 1,
+    stores: {
+        posts: { keyPath: 'id' },
+        chat: { keyPath: 'id' }, // Auto-increment not needed if we manage IDs
+        images: { keyPath: 'id' } // Store Blob/Base64 here
+    }
+};
+
+class StorageEngine {
+    constructor() {
+        this.db = null;
+        this.isReady = false;
+        this.init();
+    }
+
+    init() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(DB_CONFIG.name, DB_CONFIG.version);
+
+            request.onupgradeneeded = (event) => {
+                const db = event.target.result;
+                // Create Stores
+                if (!db.objectStoreNames.contains('posts')) db.createObjectStore('posts', { keyPath: 'id' });
+                if (!db.objectStoreNames.contains('chat')) db.createObjectStore('chat', { keyPath: 'id' });
+                if (!db.objectStoreNames.contains('images')) db.createObjectStore('images', { keyPath: 'id' });
+            };
+
+            request.onsuccess = (event) => {
+                this.db = event.target.result;
+                this.isReady = true;
+                console.log(' StorageEngine: IndexedDB Online');
+                resolve(this.db);
+            };
+
+            request.onerror = (event) => {
+                console.error(' StorageEngine: IndexedDB Failed', event);
+                this.fallbackMode = true;
+                reject('IDB_FAIL');
+            };
+        });
+    }
+
+    // Generic Add
+    async add(storeName, data) {
+        if (!this.isReady) await this.init();
+        return new Promise((resolve, reject) => {
+            const tx = this.db.transaction([storeName], 'readwrite');
+            const store = tx.objectStore(storeName);
+            const req = store.put(data);
+            
+            req.onsuccess = () => resolve(true);
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    // Generic Get All (Sorted is harder in vanilla IDB without indexes, so we just get all and sort in memory for now)
+    async getAll(storeName) {
+        if (!this.isReady) await this.init();
+        return new Promise((resolve, reject) => {
+            const tx = this.db.transaction([storeName], 'readonly');
+            const store = tx.objectStore(storeName);
+            const req = store.getAll();
+
+            req.onsuccess = () => resolve(req.result || []);
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    // Initialize Seeding Wrapper
+    async seedIfEmpty() {
+        if (!this.isReady) await this.init();
+        const posts = await this.getAll('posts');
+        if (posts.length === 0) {
+           console.log(' StorageEngine: Seeding Initial Content...');
+           // Call DataManager's logic but route it through IDB
+           // (We will refactor DataManager to use this engine)
+        }
+    }
+}
+
+// Initialize Global Engine
+window.Storage = new StorageEngine();
+
+// --- Overwrite DataManager extensions to use Async Storage ---
+// Note: This is a 'Patch' approach. 
+// A real refactor would rewrite DataManager completely, but we will wrap for backward compatibility.
+
+DataManager.getPosts = async function() {
+    try {
+        const posts = await window.Storage.getAll('posts');
+        // Sort by timestamp desc
+        return posts.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+    } catch(e) {
+        return JSON.parse(localStorage.getItem('quizzup_posts')) || []; // Fallback
+    }
+};
+
+DataManager.addPost = async function(post) {
+    try {
+        await window.Storage.add('posts', post);
+        // Also keep localStorage sync for now (Hybrid Mode) for safety
+        let local = JSON.parse(localStorage.getItem('quizzup_posts')) || [];
+        local.unshift(post);
+        if(local.length > 20) local.pop();
+        localStorage.setItem('quizzup_posts', JSON.stringify(local));
+    } catch(e) {
+        console.error(e);
+    }
+};
+
+DataManager.getChatHistory = async function() {
+    try {
+        const chat = await window.Storage.getAll('chat');
+        return chat.sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+    } catch(e) { 
+        return JSON.parse(localStorage.getItem('quizzup_chat')) || [];
+    }
+};
+
+DataManager.addChatMessage = async function(msg) {
+    try {
+        await window.Storage.add('chat', msg);
+        // Hybrid Sync
+        let local = JSON.parse(localStorage.getItem('quizzup_chat')) || [];
+        local.push(msg);
+        if(local.length > 50) local.shift();
+        localStorage.setItem('quizzup_chat', JSON.stringify(local));
+    } catch(e) {
+        console.error(e);
+    }
+};
+

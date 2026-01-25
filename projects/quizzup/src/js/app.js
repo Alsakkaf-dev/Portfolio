@@ -1040,15 +1040,62 @@ window.saveProfileChanges = function () {
 init();
 
 /* =========================================
-   COMMUNITY HUB & CHAT SYSTEM (Corrected & Re-applied)
+   COMMUNITY HUB & CHAT SYSTEM (ASYNC V2 - JOLCE ARCHITECTURE)
    ========================================= */
 
-function renderCommunity() {
+// Virtual Scroller Logic (Vanilla JS)
+class VirtualScroller {
+    constructor(containerId, itemHeight, renderItemFn) {
+        this.container = document.getElementById(containerId);
+        this.itemHeight = itemHeight;
+        this.renderItem = renderItemFn;
+        this.items = [];
+        this.visibleItems = 20; // Viewport size roughly
+
+        if (this.container) {
+            this.container.addEventListener('scroll', () => this.onScroll());
+        }
+    }
+
+    setData(items) {
+        this.items = items;
+        this.render();
+    }
+
+    render() {
+        if (!this.container) return;
+        // Simplified Logic: Just render last 50 for now to ensure stability
+        // Full virtual scrolling requires a spacer div and calculation
+        // For this version, we stick to the "Limit 50" robustness rule
+        const visibleInfo = this.items.slice(-50);
+        this.container.innerHTML = visibleInfo.map(this.renderItem).join('');
+        this.container.scrollTop = this.container.scrollHeight;
+    }
+
+    onScroll() {
+        // Future expansion: Dynamic loading
+    }
+}
+
+async function renderCommunity() {
     pageTitle.textContent = "Global Nexus";
 
-    // Get stored data via DataManager
-    const posts = DataManager.getPosts();
-    const chat = DataManager.getChatHistory();
+    // Show Loading State
+    mainContent.innerHTML = `<div class="loader">Accessing Secure Vault...</div>`;
+
+    // Get stored data via DataManager (ASYNC)
+    // Note: DataManager methods were patched to be async
+    let posts = [];
+    let chat = [];
+
+    try {
+        posts = await DataManager.getPosts();
+        chat = await DataManager.getChatHistory();
+    } catch (e) {
+        console.warn("Async fetch failed, using fallback", e);
+        posts = JSON.parse(localStorage.getItem('quizzup_posts')) || [];
+        chat = JSON.parse(localStorage.getItem('quizzup_chat')) || [];
+    }
 
     mainContent.innerHTML = `
         <div class="community-layout fade-in">
@@ -1064,10 +1111,17 @@ function renderCommunity() {
                     </div>
                     <div class="flex-center" style="justify-content: space-between;">
                         <div class="post-actions">
-                            <button class="icon-btn" title="Attach Image">📷</button>
-                            <button class="icon-btn" title="Add Poll">📊</button>
+                            <button class="icon-btn" title="Attach Image" onclick="triggerImageUpload()">📷</button>
+                            <input type="file" id="img-upload-hidden" hidden accept="image/*" onchange="handleImageSelect(event)">
+                            <button class="icon-btn" title="Add Poll" onclick="togglePollCreator()">📊</button>
                         </div>
                         <button class="primary-btn small-btn" onclick="submitPost()">Post Update</button>
+                    </div>
+                    
+                    <!-- Image Preview Area -->
+                    <div id="img-preview-area" class="hidden" style="margin-top:1rem; position:relative;">
+                        <img id="img-preview" src="" style="max-height: 200px; border-radius: 8px;">
+                        <button onclick="clearImageUpload()" style="position:absolute; top:5px; left:5px; background:rgba(0,0,0,0.5); color:white; border:none; border-radius:50%; width:24px;">×</button>
                     </div>
                 </div>
 
@@ -1087,7 +1141,11 @@ function renderCommunity() {
                     </div>
                     
                     <div id="chat-messages" class="chat-messages">
-                        ${chat.map(msg => renderChatHTML(msg)).join('')}
+                        <!-- Populated by VirtualScroller -->
+                    </div>
+
+                    <div class="chat-typing hidden" id="chat-typing-indicator" style="padding: 0.5rem 1rem; font-size: 0.8rem; color: var(--text-muted); font-style: italic;">
+                        Aria is typing...
                     </div>
 
                     <div class="chat-input-area">
@@ -1099,9 +1157,9 @@ function renderCommunity() {
         </div>
     `;
 
-    // Auto-scroll chat to bottom
-    const chatBox = document.getElementById('chat-messages');
-    if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
+    // Init Virtual Scroller for Chat
+    window.chatScroller = new VirtualScroller('chat-messages', 60, renderChatHTML);
+    window.chatScroller.setData(chat);
 }
 
 function renderPostHTML(post) {
@@ -1122,6 +1180,7 @@ function renderPostHTML(post) {
             </div>
             <div class="post-content">
                 ${post.content}
+                ${post.image ? `<img src="${post.image}" style="max-width:100%; border-radius:8px; margin-top:1rem;">` : ''}
             </div>
             <div class="post-footer">
                 <button class="reaction-btn" onclick="likePost(this)">❤️ ${post.likes || 0}</button>
@@ -1143,10 +1202,36 @@ function renderChatHTML(msg) {
     `;
 }
 
-window.submitPost = function () {
+// Image Handling Logic
+window.triggerImageUpload = () => document.getElementById('img-upload-hidden').click();
+window.currentPostImage = null;
+
+window.handleImageSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+            window.currentPostImage = evt.target.result; // Base64
+            const prev = document.getElementById('img-preview');
+            const area = document.getElementById('img-preview-area');
+            prev.src = window.currentPostImage;
+            area.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+    }
+};
+
+window.clearImageUpload = () => {
+    window.currentPostImage = null;
+    document.getElementById('img-preview-area').classList.add('hidden');
+    document.getElementById('img-upload-hidden').value = '';
+};
+
+window.submitPost = async function () {
     const input = document.getElementById('post-input');
     const content = input.value.trim();
-    if (!content) return;
+
+    if (!content && !window.currentPostImage) return;
 
     const newPost = {
         id: Date.now().toString(),
@@ -1154,13 +1239,16 @@ window.submitPost = function () {
         name: STATE.currentUser.name,
         avatar: STATE.currentUser.profilePic,
         content: content,
+        image: window.currentPostImage, // Rich Media Support
         timestamp: new Date().toISOString(),
         likes: 0
     };
 
-    DataManager.addPost(newPost);
+    await DataManager.addPost(newPost); // Async add
+
     input.value = '';
-    renderCommunity(); // Re-render
+    clearImageUpload();
+    renderCommunity(); // Re-render triggers async fetch
 };
 
 window.deletePost = function (id) {
@@ -1174,7 +1262,7 @@ window.handleChatEnter = function (e) {
     if (e.key === 'Enter') sendChatMessage();
 };
 
-window.sendChatMessage = function () {
+window.sendChatMessage = async function () {
     const input = document.getElementById('chat-input');
     const text = input.value.trim();
     if (!text) return;
@@ -1187,19 +1275,19 @@ window.sendChatMessage = function () {
         timestamp: new Date().toISOString()
     };
 
-    DataManager.addChatMessage(msg);
+    await DataManager.addChatMessage(msg);
     input.value = '';
 
-    // Partial update for performance
-    const chatBox = document.getElementById('chat-messages');
-    if (chatBox) {
-        chatBox.innerHTML += renderChatHTML(msg);
-        chatBox.scrollTop = chatBox.scrollHeight;
+    // Optimistic Update
+    if (window.chatScroller) {
+        let current = window.chatScroller.items;
+        current.push(msg);
+        window.chatScroller.setData(current);
     }
 
-    // Simulate Bot Reply
+    // Smart Bot Trigger
     setTimeout(() => {
-        simulateBotReply();
+        simulateBotReply(); // Now with IDB support
     }, 2000 + Math.random() * 3000);
 };
 
