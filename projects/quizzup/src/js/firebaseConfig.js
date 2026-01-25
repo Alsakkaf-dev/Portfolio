@@ -11,12 +11,13 @@
 
 // --- PASTE YOUR CONFIG HERE ---
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY_HERE",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "123456789",
-    appId: "1:123456789:web:abcdef123456"
+    apiKey: "AIzaSyBDoWSbTnQBX7DQUNrHjQPNzF8O-VgxyHA",
+    authDomain: "quizzup-f3419.firebaseapp.com",
+    projectId: "quizzup-f3419",
+    storageBucket: "quizzup-f3419.firebasestorage.app",
+    messagingSenderId: "1050767939102",
+    appId: "1:1050767939102:web:a70feb16d4470b14a4000f",
+    measurementId: "G-75PET57P2Y"
 };
 // ------------------------------
 
