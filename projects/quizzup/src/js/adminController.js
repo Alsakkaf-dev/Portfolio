@@ -20,7 +20,13 @@ const AdminController = {
      * Initializes the Admin Controller.
      */
     init: function () {
-        this.render();
+        try {
+            console.log("AdminController Init");
+            this.render();
+        } catch (e) {
+            console.error("Admin Init Error:", e);
+            document.getElementById('main-content').innerHTML = `<div style="padding:2rem; color:red;"><h3>Admin Panel Error</h3><pre>${e.message}</pre></div>`;
+        }
     },
 
     /**
@@ -28,6 +34,8 @@ const AdminController = {
      */
     render: function () {
         const container = document.getElementById('main-content');
+        if (!container) return;
+
         container.innerHTML = `
             <div class="admin-layout fade-in">
                 <nav class="admin-sidebar">
@@ -41,7 +49,12 @@ const AdminController = {
                 </div>
             </div>
         `;
-        this.renderViewport();
+
+        try {
+            this.renderViewport();
+        } catch (e) {
+            document.getElementById('admin-view-port').innerHTML = `<div style="color:red;">Viewport Error: ${e.message}</div>`;
+        }
     },
 
     /**
@@ -58,6 +71,7 @@ const AdminController = {
      */
     renderViewport: function () {
         const viewport = document.getElementById('admin-view-port');
+        if (!viewport) return;
 
         if (this.currentView === 'users') {
             this.renderUsers(viewport);
@@ -77,7 +91,7 @@ const AdminController = {
      * @param {HTMLElement} container - The container element.
      */
     renderUsers: function (container) {
-        const users = DataManager.getUsers();
+        const users = DataManager.getUsers() || [];
 
         let html = `
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
@@ -99,22 +113,27 @@ const AdminController = {
                 <tbody>
         `;
 
-        users.forEach(u => {
-            html += `
-                <tr>
-                    <td>
-                        <div style="font-weight:600;">${u.name}</div>
-                        <div style="font-size:0.8rem; color:var(--text-muted);">@${u.username} ${u.isBot ? '(BOT)' : ''} ${u.isAdmin ? '👑' : ''}</div>
-                    </td>
-                    <td>${u.level || 1}</td>
-                    <td>${u.points}</td>
-                    <td>
-                        <button class="admin-action-btn btn-warning" onclick="AdminController.handleReset('${u.username}')">Reset Pts</button>
-                        ${!u.isBot ? `<button class="admin-action-btn btn-danger" onclick="AdminController.handleDeleteUser('${u.username}')">Delete</button>` : ''}
-                    </td>
-                </tr>
-            `;
-        });
+        if (users.length === 0) {
+            html += `<tr><td colspan="4" class="text-center">No users found</td></tr>`;
+        } else {
+            users.forEach(u => {
+                if (!u) return;
+                html += `
+                    <tr>
+                        <td>
+                            <div style="font-weight:600;">${u.name || u.username}</div>
+                            <div style="font-size:0.8rem; color:var(--text-muted);">@${u.username} ${u.isBot ? '(BOT)' : ''} ${u.isAdmin ? '👑' : ''}</div>
+                        </td>
+                        <td>${u.level || 1}</td>
+                        <td>${u.points}</td>
+                        <td>
+                            <button class="admin-action-btn btn-warning" onclick="AdminController.handleReset('${u.username}')">Reset Pts</button>
+                            ${!u.isBot ? `<button class="admin-action-btn btn-danger" onclick="AdminController.handleDeleteUser('${u.username}')">Delete</button>` : ''}
+                        </td>
+                    </tr>
+                `;
+            });
+        }
 
         html += `</tbody></table>`;
         container.innerHTML = html;
