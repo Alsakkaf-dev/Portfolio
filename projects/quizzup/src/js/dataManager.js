@@ -4,8 +4,8 @@
  * @author Mohammed Alsakkaf
  */
 
-const DATA_KEY = 'quizzup_content_v1';
-const USERS_KEY = 'quizzup_arena_v1';
+const DATA_KEY = 'quizzup_content_v2';
+const USERS_KEY = 'quizzup_arena_v2';
 
 // Static fallback data (The original quizData)
 const INITIAL_DATA = {
