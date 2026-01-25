@@ -1548,3 +1548,128 @@ button {
         margin-top: 2rem;
     }
 }
+
+/* =========================================
+   PHASE 3: UI POLISH & COMMUNITY OVERHAUL
+   ========================================= */
+
+/* Fix Text Overflow & Clutter */
+.post-content {
+    word-break: break-word; /* Prevents long strings from breaking layout */
+    overflow-wrap: break-word;
+    white-space: pre-wrap; /* Preserves newlines but wraps text */
+    line-height: 1.6;
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+}
+
+/* Improve Card Balance */
+.post-card {
+    padding: 2rem !important; /* Meaningful padding */
+    margin-bottom: 1.5rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.post-card:hover {
+    box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+    border-color: rgba(99, 102, 241, 0.3);
+}
+
+.post-header {
+    margin-bottom: 1.5rem; /* Space between avatar and text */
+}
+
+.post-author {
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: white;
+}
+
+.post-time {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+/* Interactive Buttons */
+.reaction-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.05);
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+}
+
+.reaction-btn:hover {
+    background: rgba(255,255,255,0.1);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.reaction-btn.active {
+    background: rgba(239, 68, 68, 0.15); /* Red for like */
+    color: var(--danger);
+}
+
+/* Comments Section (New) */
+.comments-section {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    animation: fade-down 0.3s ease-out;
+}
+
+.comment-input-area {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.comment-input {
+    flex: 1;
+    background: rgba(0,0,0,0.2);
+    border: 1px solid var(--border-glass);
+    padding: 0.8rem;
+    border-radius: 8px;
+    color: white;
+    font-family: inherit;
+}
+
+.comment-item {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding-left: 0.5rem;
+}
+
+.comment-bubble {
+    background: rgba(255,255,255,0.03);
+    padding: 0.8rem 1rem;
+    border-radius: 0 12px 12px 12px;
+    max-width: 85%;
+}
+
+.comment-author {
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-bottom: 0.2rem;
+    color: var(--text-secondary);
+}
+
+/* Real-Time indicators */
+.live-badge {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: var(--success);
+    border-radius: 50%;
+    margin-right: 5px;
+    box-shadow: 0 0 10px var(--success);
+    animation: blink 2s infinite;
+}
+
+@keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
