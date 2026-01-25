@@ -746,3 +746,57 @@ img[src=""] {
 .social-badges a:hover img {
     transform: translateY(-3px);
 }
+
+/* Professional Skills Section */
+.professional-skills {
+    padding: 6rem 0;
+    background: #ffffff;
+}
+
+.prof-skills-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2.5rem;
+    margin-top: 3rem;
+}
+
+.prof-skill-card {
+    padding: 2.5rem;
+    background: var(--bg-gray);
+    border-radius: 2rem;
+    border: 1px solid transparent;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.prof-skill-card:hover {
+    background: #ffffff;
+    border-color: var(--primary);
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(99, 102, 241, 0.1);
+}
+
+.prof-skill-icon {
+    width: 60px;
+    height: 60px;
+    background: rgba(99, 102, 241, 0.1);
+    border-radius: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: var(--primary);
+    margin-bottom: 2rem;
+}
+
+.prof-skill-card h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: var(--text-dark);
+}
+
+.prof-skill-card p {
+    font-size: 0.95rem;
+    color: var(--text-gray);
+    line-height: 1.6;
+}
