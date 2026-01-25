@@ -76,7 +76,7 @@ const STATE = {
 /**
  * Initializes the application.
  */
-function init() {
+async function init() {
     try {
         console.log("🚀 Initializing Application...");
 
@@ -88,7 +88,41 @@ function init() {
         DataManager.deleteAllBotUsers();
         STATE.users = DataManager.getUsers();
 
-        // 3. Seed Content
+        // 3. Cloud Sync (Slow, Async)
+        if (typeof CloudManager !== 'undefined' && typeof db !== 'undefined') {
+            const statusMsg = document.createElement('div');
+            statusMsg.id = 'cloud-status';
+            statusMsg.style.cssText = "position:fixed; bottom:10px; right:10px; color:var(--text-muted); font-size:0.8rem; z-index:9999;";
+            statusMsg.textContent = "☁️ Connecting to server...";
+            document.body.appendChild(statusMsg);
+
+            try {
+                const cloudUsers = await CloudManager.getUsers();
+                if (cloudUsers && cloudUsers.length > 0) {
+                    STATE.users = cloudUsers;
+                    DataManager.saveUsers(STATE.users);
+                    console.log("✅ Cloud Sync Complete. Remote users:", cloudUsers.length);
+                    statusMsg.textContent = "☁️ Online";
+                    statusMsg.style.color = "var(--success)";
+
+                    if (STATE.currentUser) {
+                        const fresh = STATE.users.find(u => u.username === STATE.currentUser.username);
+                        if (fresh) {
+                            STATE.currentUser = fresh;
+                            updateTopBar();
+                        }
+                    }
+                } else {
+                    statusMsg.textContent = "☁️ No remote data.";
+                }
+            } catch (err) {
+                console.warn("Cloud Sync Error:", err);
+                statusMsg.textContent = "☁️ Offline";
+            }
+            setTimeout(() => { if (statusMsg) statusMsg.remove(); }, 5000);
+        }
+
+        // 4. Seed Content
         DataManager.seedInitialContent();
 
         // 4. Factory Reset Check
@@ -127,6 +161,9 @@ function init() {
  */
 function saveUsers() {
     DataManager.saveUsers(STATE.users);
+    if (typeof CloudManager !== 'undefined' && typeof db !== 'undefined' && STATE.currentUser) {
+        CloudManager.saveUser(STATE.currentUser);
+    }
 }
 
 /**
