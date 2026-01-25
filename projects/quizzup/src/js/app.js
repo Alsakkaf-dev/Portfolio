@@ -90,6 +90,9 @@ function init() {
 
     // Check if user session exists (optional, for now just force login)
     // if (localStorage.getItem('quizzup_session')) ...
+
+    // Initialize Community Content (Seed)
+    DataManager.seedInitialContent();
 }
 
 /**
@@ -636,13 +639,37 @@ function finishQuiz() {
 
                 <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
                     <button class="secondary-btn" onclick="navigateTo('dashboard')">Dashboard</button>
-                    <button class="primary-btn" onclick="renderReviewMode()">Review Answers</button>
+                    <button class="primary-btn" onclick="shareToCommunity(${score}, ${total}, '${STATE.quiz.category}')">📢 Share to Community</button>
                     <button class="secondary-btn" onclick="startQuiz()">Retry Mission</button>
+                </div>
+                <div style="margin-top: 1rem;">
+                    <button class="text-btn" onclick="renderReviewMode()">Review Detailed Answers</button>
                 </div>
             </div>
         </div>
     `;
 }
+
+/**
+ * Shares the quiz result to the community feed.
+ */
+window.shareToCommunity = function (score, total, category) {
+    const accuracy = Math.round((score / total) * 100);
+    const emoji = accuracy >= 90 ? '🔥' : (accuracy >= 70 ? '🚀' : '📚');
+    const msg = `Just scored ${score}/${total} (${accuracy}%) in the ${category} module! ${emoji} Can anyone beat my accuracy?`;
+
+    DataManager.addPost({
+        id: Date.now().toString(),
+        username: STATE.currentUser.username,
+        name: STATE.currentUser.name,
+        avatar: STATE.currentUser.profilePic,
+        content: msg,
+        timestamp: new Date().toISOString(),
+        likes: 0
+    });
+
+    navigateTo('community');
+};
 
 /**
  * Renders the review mode showing user answers.
@@ -1011,3 +1038,212 @@ window.saveProfileChanges = function () {
 
 // Start
 init();
+
+/* =========================================
+   COMMUNITY HUB & CHAT SYSTEM (Corrected & Re-applied)
+   ========================================= */
+
+function renderCommunity() {
+    pageTitle.textContent = "Global Nexus";
+
+    // Get stored data via DataManager
+    const posts = DataManager.getPosts();
+    const chat = DataManager.getChatHistory();
+
+    mainContent.innerHTML = `
+        <div class="community-layout fade-in">
+            <!-- Left Column: Activity Feed -->
+            <div class="feed-section">
+                <!-- Post Creator -->
+                <div class="glass-card create-post-card">
+                    <div class="flex-center" style="justify-content: flex-start; gap: 1rem; margin-bottom: 1rem;">
+                        <div class="avatar-small">
+                            ${STATE.currentUser.profilePic ? `<img src="${STATE.currentUser.profilePic}">` : STATE.currentUser.name.charAt(0)}
+                        </div>
+                        <input type="text" id="post-input" placeholder="Share your achievement or thought..." class="post-input">
+                    </div>
+                    <div class="flex-center" style="justify-content: space-between;">
+                        <div class="post-actions">
+                            <button class="icon-btn" title="Attach Image">📷</button>
+                            <button class="icon-btn" title="Add Poll">📊</button>
+                        </div>
+                        <button class="primary-btn small-btn" onclick="submitPost()">Post Update</button>
+                    </div>
+                </div>
+
+                <!-- Feed Stream -->
+                <div id="feed-stream" class="feed-stream">
+                    ${posts.length === 0 ? '<div class="empty-state">No meaningful signals detected yet. Be the first to transmit.</div>' :
+            posts.map(post => renderPostHTML(post)).join('')}
+                </div>
+            </div>
+
+            <!-- Right Column: Live Chat -->
+            <div class="chat-section">
+                <div class="glass-card chat-container">
+                    <div class="chat-header">
+                        <h3>⚡ Live Comms <span style="font-size:0.8rem; opacity:0.7;">• ${STATE.users.length * 3} Online</span></h3>
+                        <div class="live-indicator"><span class="blink-dot"></span> Online</div>
+                    </div>
+                    
+                    <div id="chat-messages" class="chat-messages">
+                        ${chat.map(msg => renderChatHTML(msg)).join('')}
+                    </div>
+
+                    <div class="chat-input-area">
+                        <input type="text" id="chat-input" placeholder="Type a message..." onkeypress="handleChatEnter(event)">
+                        <button class="send-btn" onclick="sendChatMessage()">➤</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Auto-scroll chat to bottom
+    const chatBox = document.getElementById('chat-messages');
+    if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function renderPostHTML(post) {
+    const isMe = post.username === STATE.currentUser.username;
+    return `
+        <div class="glass-card post-card ${post.isHighlight ? 'highlight-post' : ''}">
+            <div class="post-header">
+                <div class="flex-center" style="gap: 0.8rem; justify-content: flex-start;">
+                    <div class="avatar-small">
+                         ${post.avatar ? `<img src="${post.avatar}">` : post.name.charAt(0)}
+                    </div>
+                    <div>
+                        <div class="post-author">${post.name} ${isMe ? '(You)' : ''}</div>
+                        <div class="post-time">${timeAgo(post.timestamp)}</div>
+                    </div>
+                </div>
+                ${isMe ? `<button class="delete-post-btn" onclick="deletePost('${post.id}')">×</button>` : ''}
+            </div>
+            <div class="post-content">
+                ${post.content}
+            </div>
+            <div class="post-footer">
+                <button class="reaction-btn" onclick="likePost(this)">❤️ ${post.likes || 0}</button>
+                <button class="reaction-btn">💬 Comment</button>
+            </div>
+        </div>
+    `;
+}
+
+function renderChatHTML(msg) {
+    const isMe = msg.username === STATE.currentUser.username;
+    return `
+        <div class="chat-message ${isMe ? 'my-message' : ''}">
+            <div class="chat-bubble">
+                <div class="chat-user">${msg.name}</div>
+                <div class="chat-text">${msg.text}</div>
+            </div>
+        </div>
+    `;
+}
+
+window.submitPost = function () {
+    const input = document.getElementById('post-input');
+    const content = input.value.trim();
+    if (!content) return;
+
+    const newPost = {
+        id: Date.now().toString(),
+        username: STATE.currentUser.username,
+        name: STATE.currentUser.name,
+        avatar: STATE.currentUser.profilePic,
+        content: content,
+        timestamp: new Date().toISOString(),
+        likes: 0
+    };
+
+    DataManager.addPost(newPost);
+    input.value = '';
+    renderCommunity(); // Re-render
+};
+
+window.deletePost = function (id) {
+    let posts = DataManager.getPosts();
+    posts = posts.filter(p => p.id !== id);
+    DataManager.savePosts(posts);
+    renderCommunity();
+};
+
+window.handleChatEnter = function (e) {
+    if (e.key === 'Enter') sendChatMessage();
+};
+
+window.sendChatMessage = function () {
+    const input = document.getElementById('chat-input');
+    const text = input.value.trim();
+    if (!text) return;
+
+    const msg = {
+        id: Date.now(),
+        username: STATE.currentUser.username,
+        name: STATE.currentUser.name,
+        text: text,
+        timestamp: new Date().toISOString()
+    };
+
+    DataManager.addChatMessage(msg);
+    input.value = '';
+
+    // Partial update for performance
+    const chatBox = document.getElementById('chat-messages');
+    if (chatBox) {
+        chatBox.innerHTML += renderChatHTML(msg);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    // Simulate Bot Reply
+    setTimeout(() => {
+        simulateBotReply();
+    }, 2000 + Math.random() * 3000);
+};
+
+function timeAgo(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const seconds = Math.floor((now - date) / 1000);
+    if (seconds < 60) return 'Just now';
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    return date.toLocaleDateString();
+}
+
+// Bot Logic (Refactored to DataManager)
+const BOT_NAMES = ['Aria', 'Nexus', 'Kai', 'Nova', 'System'];
+const BOT_MESSAGES = [
+    "Anyone up for a DSA challenge?",
+    "Need help with OS paging concepts!",
+    "Just hit level 15! 🚀",
+    "This platform is looking slick.",
+    "Good luck everyone!",
+    "Who is top of the leaderboard now?"
+];
+
+function simulateBotReply() {
+    const name = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
+    const text = BOT_MESSAGES[Math.floor(Math.random() * BOT_MESSAGES.length)];
+
+    const msg = {
+        username: 'bot_' + name.toLowerCase(),
+        name: name,
+        text: text,
+        timestamp: new Date().toISOString()
+    };
+
+    DataManager.addChatMessage(msg);
+
+    if (STATE.currentView === 'community') {
+        const chatBox = document.getElementById('chat-messages');
+        if (chatBox) {
+            chatBox.innerHTML += renderChatHTML(msg);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    }
+}
