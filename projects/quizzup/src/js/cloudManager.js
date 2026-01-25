@@ -34,6 +34,19 @@ const CloudManager = {
     },
 
     /**
+     * Deletes a user from Firestore.
+     * @param {string} username 
+     */
+    deleteUser: async function (username) {
+        if (!db) return;
+        try {
+            await db.collection('users').doc(username).delete();
+        } catch (e) {
+            console.error("Cloud Delete Error:", e);
+        }
+    },
+
+    /**
      * Syncs the entire user list (Mass Update).
      * CAUTION: High write count. Use sparingly.
      */
@@ -60,20 +73,6 @@ const CloudManager = {
     addPost: async function (post) {
         if (!db) return;
         await db.collection('posts').doc(post.id).set(post);
-    },
-
-    deletePost: async function (postId) {
-        if (!db) return;
-        await db.collection('posts').doc(postId).delete();
-    },
-
-    deleteUser: async function (username) {
-        if (!db) return;
-        try {
-            await db.collection('users').doc(username).delete();
-        } catch (e) {
-            console.error("Cloud Delete User Error:", e);
-        }
     },
 
     // --- Quiz Data (Optional: If we want shared question banks) ---

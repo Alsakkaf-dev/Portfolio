@@ -35,7 +35,6 @@ const AdminController = {
                     <button class="admin-nav-btn ${this.currentView === 'content' ? 'active' : ''}" onclick="AdminController.switchView('content')">📚 Subject Structure</button>
                     <button class="admin-nav-btn ${this.currentView === 'questions' ? 'active' : ''}" onclick="AdminController.switchView('questions')">❓ Question Banks</button>
                     <button class="admin-nav-btn ${this.currentView === 'ai-gen' ? 'active' : ''}" onclick="AdminController.switchView('ai-gen')">🤖 AI Generator</button>
-                    <button class="admin-nav-btn ${this.currentView === 'community' ? 'active' : ''}" onclick="AdminController.switchView('community')">💬 Community Hub</button>
                 </nav>
                 <div class="admin-content" id="admin-view-port">
                     <!-- Dynamic Content -->
@@ -68,8 +67,6 @@ const AdminController = {
             this.renderQuestions(viewport);
         } else if (this.currentView === 'ai-gen') {
             this.renderAIGenerator(viewport);
-        } else if (this.currentView === 'community') {
-            this.renderCommunityControl(viewport);
         }
     },
 
@@ -126,7 +123,7 @@ const AdminController = {
     /**
      * Handles adding a new user via prompt.
      */
-    handleAddUser: function () {
+    handleAddUser: async function () {
         const u = prompt("Enter Username:");
         if (!u) return;
         const p = prompt("Enter Password:");
@@ -147,10 +144,11 @@ const AdminController = {
             profilePic: null,
             isAdmin: false
         };
-
         users.push(newUser);
-        DataManager.saveUsers(users);
-        if (typeof CloudManager !== 'undefined') CloudManager.saveUser(newUser); // Push to cloud
+        DataManager.saveUsers(users); // Local save
+
+        // Cloud Sync
+        if (typeof CloudManager !== 'undefined') await CloudManager.saveUser(newUser);
 
         this.renderViewport();
     },
@@ -159,11 +157,16 @@ const AdminController = {
      * Resets points for a user.
      * @param {string} username
      */
-    handleReset: function (username) {
+    handleReset: async function (username) {
         if (confirm(`Reset points for ${username}?`)) {
-            const users = DataManager.resetUserPoints(username);
-            const updatedUser = users.find(u => u.username === username);
-            if (updatedUser && typeof CloudManager !== 'undefined') CloudManager.saveUser(updatedUser); // Sync
+            DataManager.resetUserPoints(username);
+
+            // Cloud Sync
+            if (typeof CloudManager !== 'undefined') {
+                const updatedUser = DataManager.getUsers().find(u => u.username === username);
+                if (updatedUser) await CloudManager.saveUser(updatedUser);
+            }
+
             this.renderViewport();
         }
     },
@@ -171,11 +174,15 @@ const AdminController = {
     /**
      * Resets points for all users.
      */
-    handleResetAll: function () {
+    handleResetAll: async function () {
         if (confirm("Reset ALL user points? This cannot be undone.")) {
-            // This is heavy. Syncing all might hit rate limits, but ok for now.
-            const users = DataManager.resetUserPoints('ALL');
-            if (typeof CloudManager !== 'undefined') CloudManager.syncUsers(users);
+            DataManager.resetUserPoints('ALL');
+
+            // Cloud Sync
+            if (typeof CloudManager !== 'undefined') {
+                await CloudManager.syncUsers(DataManager.getUsers());
+            }
+
             this.renderViewport();
         }
     },
@@ -184,10 +191,13 @@ const AdminController = {
      * Deletes a user.
      * @param {string} username
      */
-    handleDeleteUser: function (username) {
-        if (confirm(`Delete user ${username}? This action is irreversible.`)) {
+    handleDeleteUser: async function (username) {
+        if (confirm(`Delete user ${username}?`)) {
             DataManager.deleteUser(username);
-            if (typeof CloudManager !== 'undefined') CloudManager.deleteUser(username); // Cloud Delete
+
+            // Cloud Sync
+            if (typeof CloudManager !== 'undefined') await CloudManager.deleteUser(username);
+
             this.renderViewport();
         }
     },
@@ -650,35 +660,21 @@ const AdminController = {
     },
 
     generatePrompt: function () {
-        // ... (Existing logic, collapsed for brevity if unchanged, but I must provide valid replacement)
-        // Actually, sticking to the append strategy for new methods at the end of file might be cleaner 
-        // OR better: append the new methods before the end of the object.
-        // The user instruction is 'EndLine:640', which is inside generatePrompt? 
-        // Let's use 'Add at end of object' strategy or specific insertion point.
-        // The file ends around line 800.
-        // I will insert the Community methods *after* parseAndImport (around line 800).
-    },
+        const subject = document.getElementById('gen-subject').value;
+        const chapter = document.getElementById('gen-chapter').value;
+        const count = document.getElementById('gen-count').value;
+        const type = document.getElementById('gen-type').value;
+        const source = document.getElementById('gen-source').value;
 
-    // --- THIS IS A MISTAKE IN REPLACEMENT STRATEGY ---
-    // Use proper targeting.
-    // I will target the END of the object to append new methods.
-    // I'll target `parseAndImport` and append after it.
+        if (!chapter) { alert("Please select a chapter."); return; }
+        if (chapter === 'MIXED') { alert("Cannot generate for MIXED chapter (it is an aggregator)."); return; }
 
-    const subject = document.getElementById('gen-subject').value;
-    const chapter = document.getElementById('gen-chapter').value;
-    const count = document.getElementById('gen-count').value;
-    const type = document.getElementById('gen-type').value;
-    const source = document.getElementById('gen-source').value;
+        let typeInstruction = "";
+        if (type === 'mcq') typeInstruction = "All questions must be Multiple Choice Questions (MCQ).";
+        else if (type === 'tf') typeInstruction = "All questions must be True/False Questions.";
+        else typeInstruction = "Mix question types: MCQ and True/False.";
 
-    if(!chapter) { alert("Please select a chapter."); return; }
-        if(chapter === 'MIXED') { alert("Cannot generate for MIXED chapter (it is an aggregator)."); return; }
-
-let typeInstruction = "";
-if (type === 'mcq') typeInstruction = "All questions must be Multiple Choice Questions (MCQ).";
-else if (type === 'tf') typeInstruction = "All questions must be True/False Questions.";
-else typeInstruction = "Mix question types: MCQ and True/False.";
-
-const promptText = `
+        const promptText = `
 I need you to generate a question bank for a quiz platform.
 Topic: ${subject} - ${chapter}
 Number of Questions: ${count}
@@ -712,222 +708,123 @@ Justification: False, because the sky is blue.
 Output the questions now following this strict format.
 `;
 
-const promptSection = document.getElementById('prompt-section');
-promptSection.style.display = 'block';
-document.getElementById('prompt-output').value = promptText.trim();
-promptSection.scrollIntoView({ behavior: 'smooth' });
+        const promptSection = document.getElementById('prompt-section');
+        promptSection.style.display = 'block';
+        document.getElementById('prompt-output').value = promptText.trim();
+        promptSection.scrollIntoView({ behavior: 'smooth' });
     },
 
-parseAndImport: function () {
-    const rawText = document.getElementById('import-input').value;
-    if (!rawText.trim()) { alert("Please paste the AI output first."); return; }
+    parseAndImport: function () {
+        const rawText = document.getElementById('import-input').value;
+        if (!rawText.trim()) { alert("Please paste the AI output first."); return; }
 
-    // Robust Regex-based parsing
-    // We split by "Question X" to isolate blocks
-    const blocks = rawText.split(/Question \d+/i).slice(1); // Ignore preamble
+        // Robust Regex-based parsing
+        // We split by "Question X" to isolate blocks
+        const blocks = rawText.split(/Question \d+/i).slice(1); // Ignore preamble
 
-    if (blocks.length === 0) {
-        alert("Could not parse questions. Ensure the format starts with 'Question 1', 'Question 2', etc.");
-        return;
-    }
+        if (blocks.length === 0) {
+            alert("Could not parse questions. Ensure the format starts with 'Question 1', 'Question 2', etc.");
+            return;
+        }
 
-    let successCount = 0;
+        let successCount = 0;
 
-    blocks.forEach(block => {
-        try {
-            // Extract lines
-            const blockLines = block.trim().split('\n').map(l => l.trim()).filter(l => l.length > 0);
+        blocks.forEach(block => {
+            try {
+                // Extract lines
+                const blockLines = block.trim().split('\n').map(l => l.trim()).filter(l => l.length > 0);
 
-            // 1. Question Text: Everything until the first Option (A)) or 'Correct Answer'
-            // Detection strategy: Find lines starting with A) or Correct Answer
-            let questionText = "";
-            let optionsStartIdx = -1;
-            let correctAnswerLine = -1;
-            let justificationLine = -1;
+                // 1. Question Text: Everything until the first Option (A)) or 'Correct Answer'
+                // Detection strategy: Find lines starting with A) or Correct Answer
+                let questionText = "";
+                let optionsStartIdx = -1;
+                let correctAnswerLine = -1;
+                let justificationLine = -1;
 
-            for (let i = 0; i < blockLines.length; i++) {
-                const line = blockLines[i];
-                if (line.match(/^[A-D]\)/) && optionsStartIdx === -1) optionsStartIdx = i;
-                if (line.toLowerCase().startsWith("correct answer:")) correctAnswerLine = i;
-                if (line.toLowerCase().startsWith("justification:")) justificationLine = i;
-            }
-
-            if (optionsStartIdx !== -1) {
-                // It's likely MCQ or TF with options listed
-                questionText = blockLines.slice(0, optionsStartIdx).join(' ');
-            } else if (correctAnswerLine !== -1) {
-                questionText = blockLines.slice(0, correctAnswerLine).join(' ');
-            }
-
-            // Determine Type based on Options
-            let type = 'mcq';
-            let options = [];
-            let correct = 0;
-            let answer = false; // for TF
-
-            if (optionsStartIdx !== -1 && correctAnswerLine !== -1) {
-                const optLines = blockLines.slice(optionsStartIdx, correctAnswerLine);
-                // Check if options are True/False
-                const isTF = optLines.some(l => l.toLowerCase().includes('true')) && optLines.some(l => l.toLowerCase().includes('false'));
-
-                if (isTF && optLines.length <= 2) {
-                    type = 'tf';
-                } else {
-                    type = 'mcq';
-                    // Clean options (remove A) B) etc)
-                    options = optLines.map(l => l.replace(/^[A-D]\)\s*/, ''));
+                for (let i = 0; i < blockLines.length; i++) {
+                    const line = blockLines[i];
+                    if (line.match(/^[A-D]\)/) && optionsStartIdx === -1) optionsStartIdx = i;
+                    if (line.toLowerCase().startsWith("correct answer:")) correctAnswerLine = i;
+                    if (line.toLowerCase().startsWith("justification:")) justificationLine = i;
                 }
+
+                if (optionsStartIdx !== -1) {
+                    // It's likely MCQ or TF with options listed
+                    questionText = blockLines.slice(0, optionsStartIdx).join(' ');
+                } else if (correctAnswerLine !== -1) {
+                    questionText = blockLines.slice(0, correctAnswerLine).join(' ');
+                }
+
+                // Determine Type based on Options
+                let type = 'mcq';
+                let options = [];
+                let correct = 0;
+                let answer = false; // for TF
+
+                if (optionsStartIdx !== -1 && correctAnswerLine !== -1) {
+                    const optLines = blockLines.slice(optionsStartIdx, correctAnswerLine);
+                    // Check if options are True/False
+                    const isTF = optLines.some(l => l.toLowerCase().includes('true')) && optLines.some(l => l.toLowerCase().includes('false'));
+
+                    if (isTF && optLines.length <= 2) {
+                        type = 'tf';
+                    } else {
+                        type = 'mcq';
+                        // Clean options (remove A) B) etc)
+                        options = optLines.map(l => l.replace(/^[A-D]\)\s*/, ''));
+                    }
+                }
+
+                // Parse Correct Answer
+                const correctLine = blockLines[correctAnswerLine]; // "Correct Answer: C" or "Correct Answer: B"
+                const val = correctLine.split(':')[1].trim().toUpperCase(); // "C" or "B" or "TRUE"
+
+                if (type === 'mcq') {
+                    // Map A,B,C,D to 0,1,2,3
+                    const map = { 'A': 0, 'B': 1, 'C': 2, 'D': 3 };
+                    correct = map[val.charAt(0)] !== undefined ? map[val.charAt(0)] : 0;
+                } else {
+                    // True/False
+                    // If output says "Correct Answer: A" (where A is True) or "Correct Answer: True"
+                    if (val === 'TRUE' || val.startsWith('A')) answer = true;
+                    else answer = false;
+                }
+
+                // Justification
+                let explanation = "";
+                if (justificationLine !== -1) {
+                    const parts = blockLines.slice(justificationLine);
+                    explanation = parts.join(' ').replace(/^Justification:\s*/i, '');
+                }
+
+                // Construct Object
+                const newQ = {
+                    type: type,
+                    question: questionText,
+                    explanation: explanation
+                };
+
+                if (type === 'mcq') {
+                    newQ.options = options;
+                    newQ.correct = correct;
+                } else {
+                    newQ.answer = answer;
+                }
+
+                // Add to DB
+                if (newQ.question) {
+                    DataManager.addQuestion(this.selectedSubject, this.selectedChapter, newQ);
+                    successCount++;
+                }
+
+            } catch (err) {
+                console.error("Error parsing block:", block, err);
             }
-
-            // Parse Correct Answer
-            const correctLine = blockLines[correctAnswerLine]; // "Correct Answer: C" or "Correct Answer: B"
-            const val = correctLine.split(':')[1].trim().toUpperCase(); // "C" or "B" or "TRUE"
-
-            if (type === 'mcq') {
-                // Map A,B,C,D to 0,1,2,3
-                const map = { 'A': 0, 'B': 1, 'C': 2, 'D': 3 };
-                correct = map[val.charAt(0)] !== undefined ? map[val.charAt(0)] : 0;
-            } else {
-                // True/False
-                // If output says "Correct Answer: A" (where A is True) or "Correct Answer: True"
-                if (val === 'TRUE' || val.startsWith('A')) answer = true;
-                else answer = false;
-            }
-
-            // Justification
-            let explanation = "";
-            if (justificationLine !== -1) {
-                const parts = blockLines.slice(justificationLine);
-                explanation = parts.join(' ').replace(/^Justification:\s*/i, '');
-            }
-
-            // Construct Object
-            const newQ = {
-                type: type,
-                question: questionText,
-                explanation: explanation
-            };
-
-            if (type === 'mcq') {
-                newQ.options = options;
-                newQ.correct = correct;
-            } else {
-                newQ.answer = answer;
-            }
-
-            // Add to DB
-            if (newQ.question) {
-                DataManager.addQuestion(this.selectedSubject, this.selectedChapter, newQ);
-                successCount++;
-            }
-
-        } catch (err) {
-            console.error("Error parsing block:", block, err);
-        }
-    });
-
-    alert(`Successfully imported ${successCount} questions into ${this.selectedSubject} > ${this.selectedChapter}.`);
-    this.renderViewport(); // Refresh
-},
-
-// --- Community Control ---
-
-renderCommunityControl: async function (container) {
-    container.innerHTML = '<div class="text-center" style="padding:2rem;">⏳ Loading Community Data...</div>';
-
-    // Fetch posts (Async)
-    let posts = [];
-    if (typeof DataManager.getPosts === 'function') {
-        const result = DataManager.getPosts();
-        // Check if it's a promise
-        if (result instanceof Promise) posts = await result;
-        else posts = result; // Old sync version fallback
-    }
-
-    let html = `
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-            <h2>Community Hub Control</h2>
-            <button class="action-btn btn-danger" onclick="AdminController.handleClearAllHub()">⚠️ Clear ALL Posts</button>
-        </div>
-        <div class="glass-card" style="padding:0;">
-            <table class="admin-table">
-                <thead>
-                    <tr>
-                        <th>Author</th>
-                        <th>Content</th>
-                        <th>Date</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-    `;
-
-    if (posts.length === 0) {
-        html += `<tr><td colspan="4" class="text-center" style="padding:2rem; color:var(--text-muted);">No posts found.</td></tr>`;
-    } else {
-        posts.forEach(p => {
-            const date = new Date(p.timestamp).toLocaleDateString();
-            // Truncate content
-            let content = p.content;
-            if (content.length > 50) content = content.substring(0, 50) + '...';
-
-            html += `
-                <tr>
-                    <td>
-                        <div style="font-weight:600;">@${p.username}</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted);">${p.authorName}</div>
-                    </td>
-                    <td>${content}</td>
-                    <td>${date}</td>
-                    <td>
-                        <button class="admin-action-btn btn-danger" onclick="AdminController.handleDeletePost('${p.id}')">Delete</button>
-                    </td>
-                </tr>
-            `;
         });
+
+        alert(`Successfully imported ${successCount} questions into ${this.selectedSubject} > ${this.selectedChapter}.`);
+        this.renderViewport(); // Refresh
     }
-
-    html += `</tbody></table></div>`;
-    container.innerHTML = html;
-},
-
-handleDeletePost: async function (id) {
-    if (confirm("Delete this post?")) {
-        // 1. Delete Local (via DataManager wrapper if accessible, or direct storage)
-        // DataManager doesn't expose deletePost easily in the hybrid version?
-        // Wait, I didn't add deletePost to DataManager.js in Step 1578.
-        // But I added it to CloudManager.
-        // I need to update DataManager too? 
-        // Ideally yes, but fixing Cloud is priority.
-
-        if (typeof CloudManager !== 'undefined') await CloudManager.deletePost(id);
-
-        // Manual Local Cleanup (since DataManager sync is one-way usually)
-        if (window.Storage) {
-            // Access IDB directly if possible, or reload page to sync downstream?
-            // Simplest: Force reload or re-fetch.
-        }
-
-        alert("Post Deleted.");
-        this.renderViewport();
-    }
-},
-
-handleClearAllHub: async function () {
-    const code = prompt("Type 'DELETE ALL' to confirm wiping the entire community feed.");
-    if (code === 'DELETE ALL') {
-        // This requires a CloudManager.deleteAllPosts which I didn't implement yet.
-        // I will implement a loop here for now.
-        if (typeof CloudManager !== 'undefined') {
-            const posts = await CloudManager.getPosts();
-            for (const p of posts) {
-                await CloudManager.deletePost(p.id);
-            }
-        }
-        alert("Community Feed Wiped.");
-        this.renderViewport();
-    }
-}
 };
 
 window.AdminController = AdminController;
