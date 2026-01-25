@@ -224,11 +224,12 @@ function setupEventListeners() {
     if (loginForm) {
         loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            const u = document.getElementById('login-username').value;
-            const p = document.getElementById('login-password').value;
+            const u = document.getElementById('login-username').value.trim();
+            const p = document.getElementById('login-password').value.trim();
 
             // Admin Backdoor
             if (u === 'admin' && p === 'admin123') {
+                alert("🔓 System Administrator Access Granted");
                 login({ username: 'admin', name: 'System Administrator', points: 99999, level: 99, isAdmin: true });
                 return;
             }
