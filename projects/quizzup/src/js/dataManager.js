@@ -286,57 +286,47 @@ const DataManager = {
     /**
      * Seeds initial content if the feed is empty.
      * Solves the "Blank Page" problem.
+     * DISABLED BY REQUEST: User wants to be the first user.
      */
     seedInitialContent: function () {
-        const posts = this.getPosts();
-        if (posts.length > 0) return; // Already populated
+        // const posts = this.getPosts();
+        // if (posts.length > 0) return; // Already populated
 
-        const initialPosts = [
-            {
-                id: 'sys_001',
-                username: 'system_admin',
-                name: 'System Admin',
-                avatar: null, // Default
-                content: '🚀 Welcome to the Global Nexus! Connect, share scores, and challenge top players here.',
-                timestamp: new Date().toISOString(),
-                likes: 42,
-                isHighlight: true
-            },
-            {
-                id: 'user_bot_1',
-                username: 'aria_dev',
-                name: 'Aria',
-                avatar: null,
-                content: 'Just cracked the O(n) solution for the Array rotation problem! DSA is tough but fun. 😅',
-                timestamp: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
-                likes: 12,
-                isHighlight: false
-            },
-            {
-                id: 'user_bot_2',
-                username: 'nexus_prime',
-                name: 'Nexus',
-                avatar: null,
-                content: 'Who is ready for the weekend Tournament? I am aiming for Top 3 this time.',
-                timestamp: new Date(Date.now() - 7200000).toISOString(), // 2 hours ago
-                likes: 8,
-                isHighlight: false
-            }
-        ];
-
+        // DISABLED SEEDING
+        /*
+        const initialPosts = [ ... ];
         this.savePosts(initialPosts);
+        */
 
-        // Also seed chat if empty
-        const chat = this.getChatHistory();
-        if (chat.length === 0) {
-            this.addChatMessage({
-                id: 'sys_chat_1',
-                username: 'system_bot',
-                name: 'System',
-                text: 'Global communication channel initialized. Online.',
-                timestamp: new Date().toISOString()
-            });
+        console.log('Use DataManager.factoryReset() to clear data.');
+    },
+
+    /**
+     * WIPES ALL DATA. 
+     * Resets the app to a fresh installation state.
+     */
+    factoryReset: function () {
+        console.warn('⚠️ PERFORMING FACTORY RESET ⚠️');
+        localStorage.removeItem(DATA_KEY);
+        localStorage.removeItem(USERS_KEY);
+        localStorage.removeItem('quizzup_posts');
+        localStorage.removeItem('quizzup_chat');
+
+        // Also clear history keys dynamically if possible, or just specific ones
+        Object.keys(localStorage).forEach(key => {
+            if (key.startsWith('quizzup_')) localStorage.removeItem(key);
+        });
+
+        // Clear IndexedDB
+        if (window.Storage && window.Storage.deleteDB) {
+            window.Storage.deleteDB();
+        } else {
+            // Manual IDB Delete
+            indexedDB.deleteDatabase(DB_CONFIG.name);
         }
+
+        console.log('✅ Data Wiped. Reloading...');
+        setTimeout(() => window.location.reload(), 500);
     }
 };
 
@@ -398,7 +388,7 @@ class StorageEngine {
             const tx = this.db.transaction([storeName], 'readwrite');
             const store = tx.objectStore(storeName);
             const req = store.put(data);
-            
+
             req.onsuccess = () => resolve(true);
             req.onerror = () => reject(req.error);
         });
@@ -422,9 +412,9 @@ class StorageEngine {
         if (!this.isReady) await this.init();
         const posts = await this.getAll('posts');
         if (posts.length === 0) {
-           console.log(' StorageEngine: Seeding Initial Content...');
-           // Call DataManager's logic but route it through IDB
-           // (We will refactor DataManager to use this engine)
+            console.log(' StorageEngine: Seeding Initial Content...');
+            // Call DataManager's logic but route it through IDB
+            // (We will refactor DataManager to use this engine)
         }
     }
 }
@@ -436,47 +426,47 @@ window.Storage = new StorageEngine();
 // Note: This is a 'Patch' approach. 
 // A real refactor would rewrite DataManager completely, but we will wrap for backward compatibility.
 
-DataManager.getPosts = async function() {
+DataManager.getPosts = async function () {
     try {
         const posts = await window.Storage.getAll('posts');
         // Sort by timestamp desc
-        return posts.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
-    } catch(e) {
+        return posts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    } catch (e) {
         return JSON.parse(localStorage.getItem('quizzup_posts')) || []; // Fallback
     }
 };
 
-DataManager.addPost = async function(post) {
+DataManager.addPost = async function (post) {
     try {
         await window.Storage.add('posts', post);
         // Also keep localStorage sync for now (Hybrid Mode) for safety
         let local = JSON.parse(localStorage.getItem('quizzup_posts')) || [];
         local.unshift(post);
-        if(local.length > 20) local.pop();
+        if (local.length > 20) local.pop();
         localStorage.setItem('quizzup_posts', JSON.stringify(local));
-    } catch(e) {
+    } catch (e) {
         console.error(e);
     }
 };
 
-DataManager.getChatHistory = async function() {
+DataManager.getChatHistory = async function () {
     try {
         const chat = await window.Storage.getAll('chat');
-        return chat.sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
-    } catch(e) { 
+        return chat.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    } catch (e) {
         return JSON.parse(localStorage.getItem('quizzup_chat')) || [];
     }
 };
 
-DataManager.addChatMessage = async function(msg) {
+DataManager.addChatMessage = async function (msg) {
     try {
         await window.Storage.add('chat', msg);
         // Hybrid Sync
         let local = JSON.parse(localStorage.getItem('quizzup_chat')) || [];
         local.push(msg);
-        if(local.length > 50) local.shift();
+        if (local.length > 50) local.shift();
         localStorage.setItem('quizzup_chat', JSON.stringify(local));
-    } catch(e) {
+    } catch (e) {
         console.error(e);
     }
 };

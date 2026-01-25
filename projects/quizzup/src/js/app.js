@@ -93,6 +93,14 @@ function init() {
 
     // Initialize Community Content (Seed)
     DataManager.seedInitialContent();
+
+    // Check for Factory Reset Trigger
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('reset') === 'true') {
+        DataManager.factoryReset();
+        // Remove param from URL without reload (though reload happens in reset logic anyway)
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
 }
 
 /**
