@@ -35,15 +35,23 @@ class RealTimeEngine {
             case 'POST_ADDED':
                 this.onPostAdded(data.payload);
                 break;
+            case 'POST_DELETED':
+                this.onPostDeleted(data.payload);
+                break;
             case 'LIKE_UPDATED':
                 this.onLikeUpdated(data.payload);
                 break;
             case 'COMMENT_ADDED':
-                // Optional: If we want real-time comments, we can add this handler
-                // Implementation pending UI readiness
+                this.onCommentAdded(data.payload);
                 break;
             case 'CHAT_SENT':
                 this.onChatSent(data.payload);
+                break;
+            case 'USER_UPDATE':
+                this.onUserUpdate(data.payload); // For points/profile changes
+                break;
+            case 'GLOBAL_RESET':
+                window.location.reload();
                 break;
         }
     }
@@ -88,17 +96,65 @@ class RealTimeEngine {
     }
 
     onLikeUpdated({ postId, newLikes }) {
-        // Find the post card and update the like button text
-        // This is a DOM-only update for speed
-        const likeBtn = document.querySelector(`button[onclick*="'${postId}'"]`); // Heuristic selector
-        // A better way is to add IDs to like buttons, e.g., id="like-btn-${postId}"
-        // But let's try to update data first then re-render if needed?
-        // Re-rendering whole list causes scroll jumps. DOM manipulation is better.
-
+        const likeBtn = document.querySelector(`button[data-id="${postId}"]`) || document.querySelector(`button[onclick*="'${postId}'"]`);
         if (likeBtn) {
             likeBtn.innerHTML = `❤️ ${newLikes}`;
             likeBtn.classList.add('pop-anim');
             setTimeout(() => likeBtn.classList.remove('pop-anim'), 500);
+        }
+    }
+
+    onPostDeleted(postId) {
+        // If on community page, remove the element
+        const btn = document.querySelector(`button[onclick*="${postId}"]`);
+        if (btn) {
+            const card = btn.closest('.post-card');
+            if (card) {
+                card.style.opacity = '0';
+                setTimeout(() => card.remove(), 500);
+            }
+        } else {
+            // Re-render if finding element is hard (fallback)
+            if (STATE.currentView === 'community') renderCommunity();
+        }
+    }
+
+    onCommentAdded({ postId, comment }) {
+        // Find comment list
+        const list = document.getElementById(`comment-list-${postId}`);
+        if (list) {
+            // Check if already exists (prevent double add from local optimistic update)
+            // Heuristic: Check last comment content
+            const last = list.lastElementChild;
+            if (last && last.innerHTML.includes(comment.text)) return;
+
+            list.insertAdjacentHTML('beforeend', `
+            <div class="comment-item fade-in">
+                <div class="avatar-small" style="width:24px; height:24px; font-size:0.7rem;">${comment.user.charAt(0)}</div>
+                <div class="comment-bubble">
+                    <div class="comment-author">${comment.user}</div>
+                    <div>${comment.text}</div>
+                </div>
+            </div>`);
+
+            // Update reply count text
+            const replyBtn = list.closest('.post-card').querySelector('.post-footer button:nth-child(2)');
+            if (replyBtn) {
+                const count = list.children.length;
+                replyBtn.innerHTML = `💬 ${count} Replies`;
+            }
+        }
+    }
+
+    onUserUpdate(user) {
+        // Update Leaderboard if visible
+        if (STATE.currentView === 'leaderboard') {
+            renderLeaderboard();
+        }
+        // Update Admin Panel users list if visible
+        if (STATE.currentView === 'admin') {
+            // We assume an admin render function exists or we reload
+            if (window.AdminController) window.AdminController.renderUsers();
         }
     }
 }

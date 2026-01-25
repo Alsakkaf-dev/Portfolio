@@ -73,6 +73,7 @@ const DataManager = {
      */
     saveUsers: function (users) {
         localStorage.setItem(USERS_KEY, JSON.stringify(users));
+        if (window.RealTime) window.RealTime.broadcast('USER_UPDATE', {});
     },
 
     /**
@@ -110,6 +111,7 @@ const DataManager = {
         let users = this.getUsers();
         users = users.filter(u => u.username !== username);
         this.saveUsers(users);
+        if (window.RealTime) window.RealTime.broadcast('USER_UPDATE', {}); // Force Leaderboard refresh
         return users;
     },
 
@@ -312,6 +314,8 @@ const DataManager = {
         localStorage.removeItem('quizzup_posts_v3');
         localStorage.removeItem('quizzup_chat_v3');
 
+        if (window.RealTime) window.RealTime.broadcast('GLOBAL_RESET', {});
+
         // Also clear history keys dynamically if possible, or just specific ones
         Object.keys(localStorage).forEach(key => {
             if (key.startsWith('quizzup_')) localStorage.removeItem(key);
@@ -446,6 +450,8 @@ DataManager.addPost = async function (post) {
         local.unshift(post);
         if (local.length > 20) local.pop();
         localStorage.setItem('quizzup_posts_v3', JSON.stringify(local));
+        // Broadcast Event
+        if (window.RealTime) window.RealTime.broadcast('POST_ADDED', post);
     } catch (e) {
         console.error(e);
     }
@@ -468,6 +474,8 @@ DataManager.addChatMessage = async function (msg) {
         local.push(msg);
         if (local.length > 50) local.shift();
         localStorage.setItem('quizzup_chat_v3', JSON.stringify(local));
+        // Broadcast Event
+        if (window.RealTime) window.RealTime.broadcast('CHAT_SENT', msg);
     } catch (e) {
         console.error(e);
     }

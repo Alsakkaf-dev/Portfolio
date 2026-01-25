@@ -1225,7 +1225,8 @@ window.submitPost = async function () {
     };
 
     await DataManager.addPost(newPost); // Async add
-    window.RealTime.broadcast('POST_ADDED', newPost);
+    await DataManager.addPost(newPost); // Async add
+    // DataManager now handles broadcast 'POST_ADDED'
 
     input.value = '';
     clearImageUpload();
@@ -1236,6 +1237,7 @@ window.deletePost = function (id) {
     let posts = DataManager.getPosts();
     posts = posts.filter(p => p.id !== id);
     DataManager.savePosts(posts);
+    if (window.RealTime) window.RealTime.broadcast('POST_DELETED', id);
     renderCommunity();
 };
 
@@ -1257,7 +1259,8 @@ window.sendChatMessage = async function () {
     };
 
     await DataManager.addChatMessage(msg);
-    window.RealTime.broadcast('CHAT_SENT', msg);
+    await DataManager.addChatMessage(msg);
+    // DataManager handles broadcast 'CHAT_SENT'
     input.value = '';
 
     // Optimistic Update
@@ -1374,6 +1377,9 @@ window.submitComment = async function (postId) {
 
         post.comments.push(newComment);
         await DataManager.savePosts(posts);
+
+        // Broadcast new comment
+        if (window.RealTime) window.RealTime.broadcast('COMMENT_ADDED', { postId: postId, comment: newComment });
 
         const list = document.getElementById(`comment-list-${postId}`);
         if (list) {
