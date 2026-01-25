@@ -147,6 +147,10 @@ class RealTimeEngine {
     }
 
     onUserUpdate(user) {
+        // CRITICAL: Reload users from storage to get the fresh list
+        console.log('🔄 Syncing User Data...');
+        STATE.users = DataManager.getUsers();
+
         // Update Leaderboard if visible
         if (STATE.currentView === 'leaderboard') {
             renderLeaderboard();

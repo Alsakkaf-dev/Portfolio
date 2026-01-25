@@ -98,175 +98,205 @@ function init() {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('reset') === 'true') {
         DataManager.factoryReset();
-        // Remove param from URL without reload (though reload happens in reset logic anyway)
         window.history.replaceState({}, document.title, window.location.pathname);
-    }
-}
-
-/**
- * Saves current users to persistent storage.
- */
-function saveUsers() {
-    DataManager.saveUsers(STATE.users);
-}
-
-/**
- * Saves a quiz result to user history.
- * @param {Object} record - The quiz result record.
- */
-function saveHistory(record) {
-    const key = `quizzup_history_${STATE.currentUser.username}`;
-    const history = JSON.parse(localStorage.getItem(key)) || [];
-    history.push(record);
-    localStorage.setItem(key, JSON.stringify(history));
-}
-
-// --- Navigation Engine ---
-
-/**
- * Navigates to a specific view.
- * @param {string} viewName - The name of the view (e.g., 'dashboard').
- * @param {Object} [params={}] - Optional parameters for the view.
- */
-function navigateTo(viewName, params = {}) {
-    STATE.currentView = viewName;
-    clearInterval(STATE.quiz.timerInterval); // Safety clear
-
-    // Update Sidebar Active State
-    document.querySelectorAll('.nav-item, .mobile-nav-item').forEach(el => {
-        if (el.dataset.view === viewName) el.classList.add('active');
-        else el.classList.remove('active');
-    });
-
-    // Update Top Bar Title
-    pageTitle.textContent = viewName.charAt(0).toUpperCase() + viewName.slice(1);
-
-    // Render Content
-    mainContent.innerHTML = ''; // Clear previous
-    mainContent.className = 'content-area'; // Reset classes
-
-    // Focus Mode Logic
-    if (viewName === 'quiz') {
-        appShell.classList.add('quiz-mode');
-    } else {
-        appShell.classList.remove('quiz-mode');
-    }
-
-    // Security Check
-    if (viewName === 'admin' && (!STATE.currentUser || !STATE.currentUser.isAdmin)) {
-        alert("⛔ Access Denied: Level 99 Clearance Required.");
-        navigateTo('dashboard');
         return;
     }
 
-    switch (viewName) {
-        case 'dashboard': renderDashboard(); break;
-        case 'leaderboard': renderLeaderboard(); break;
-        case 'community': renderCommunity(); break;
-        case 'profile': renderProfile(); break;
-        case 'admin':
-            pageTitle.textContent = "System Control";
-            if (AdminController) AdminController.init();
-            else mainContent.innerHTML = "Admin Module Error";
-            break;
-        case 'quiz':
-            pageTitle.textContent = "Active Mission";
-            renderQuiz();
-            break;
-        case 'chapters':
-            pageTitle.textContent = `${params.category} Modules`;
-            renderChapters(params.category);
-            break;
+    // Session Restore
+    const savedSession = localStorage.getItem('quizzup_session');
+    if (savedSession) {
+        try {
+            const user = JSON.parse(savedSession);
+            // Verify user still exists in DB
+            const validUser = STATE.users.find(u => u.username === user.username);
+            if (validUser) {
+                // Update local object with latest stats
+                STATE.currentUser = validUser;
+                // Skip login screen
+                login(validUser);
+            } else {
+                // User deleted remotely?
+                logout();
+            }
+        } catch (e) {
+            console.error("Session restore failed", e);
+            logout();
+        }
     }
-}
 
-// --- Auth System ---
-
-/**
- * Logs in a user.
- * @param {Object} user - The user object.
- */
-function login(user) {
-    STATE.currentUser = user;
-    updateTopBar();
-
-    // Animation Out
-    authScreen.classList.add('hidden');
-    appShell.classList.remove('hidden');
-
-    navigateTo('dashboard');
-    triggerGreeting();
-}
-
-/**
- * Logs out the current user.
- */
-function logout() {
-    STATE.currentUser = null;
-    appShell.classList.add('hidden');
-    authScreen.classList.remove('hidden');
-
-    // Reset Forms
-    document.getElementById('login-username').value = '';
-    document.getElementById('login-password').value = '';
-    showAuthForm('login');
-}
-
-/**
- * Switches between login and signup forms.
- * @param {string} type - 'login' or 'signup'.
- */
-function showAuthForm(type) {
-    if (type === 'login') {
-        loginForm.classList.remove('hidden');
-        signupForm.classList.add('hidden');
-        tabLogin.classList.add('active');
-        tabSignup.classList.remove('active');
-        authSwitch.innerHTML = `Don't have an account? <span id="switch-link" style="color:var(--primary); cursor:pointer;">Sign Up</span>`;
-    } else {
-        loginForm.classList.add('hidden');
-        signupForm.classList.remove('hidden');
-        tabLogin.classList.remove('active');
-        tabSignup.classList.add('active');
-        authSwitch.innerHTML = `Already have an account? <span id="switch-link" style="color:var(--primary); cursor:pointer;">Sign In</span>`;
+    /**
+     * Saves current users to persistent storage.
+     */
+    function saveUsers() {
+        DataManager.saveUsers(STATE.users);
     }
-    document.getElementById('switch-link').addEventListener('click', () => showAuthForm(type === 'login' ? 'signup' : 'login'));
-}
 
-/**
- * Updates the top bar with user info.
- */
-function updateTopBar() {
-    if (!STATE.currentUser) return;
-
-    walletDisplay.textContent = (STATE.currentUser.points || 0).toLocaleString();
-
-    const initial = STATE.currentUser.name.charAt(0).toUpperCase();
-    headerInitial.textContent = initial;
-
-    if (STATE.currentUser.profilePic) {
-        headerProfileImg.src = STATE.currentUser.profilePic;
-        headerProfileImg.classList.remove('hidden');
-        headerInitial.classList.add('hidden');
-    } else {
-        headerProfileImg.classList.add('hidden');
-        headerInitial.classList.remove('hidden');
+    /**
+     * Saves a quiz result to user history.
+     * @param {Object} record - The quiz result record.
+     */
+    function saveHistory(record) {
+        const key = `quizzup_history_${STATE.currentUser.username}`;
+        const history = JSON.parse(localStorage.getItem(key)) || [];
+        history.push(record);
+        localStorage.setItem(key, JSON.stringify(history));
     }
-}
 
-// --- View Renderers ---
+    // --- Navigation Engine ---
 
-/**
- * Renders the Dashboard view.
- */
-function renderDashboard() {
-    const user = STATE.currentUser;
-    const rank = [...STATE.users].sort((a, b) => b.points - a.points).findIndex(u => u.username === user.username) + 1;
+    /**
+     * Navigates to a specific view.
+     * @param {string} viewName - The name of the view (e.g., 'dashboard').
+     * @param {Object} [params={}] - Optional parameters for the view.
+     */
+    function navigateTo(viewName, params = {}) {
+        STATE.currentView = viewName;
+        localStorage.setItem('quizzup_last_view', viewName);
+        clearInterval(STATE.quiz.timerInterval); // Safety clear
 
-    // Check if DataManager needs reload
-    const subjects = Object.keys(DataManager.getQuizData());
+        // Update Sidebar Active State
+        document.querySelectorAll('.nav-item, .mobile-nav-item').forEach(el => {
+            if (el.dataset.view === viewName) el.classList.add('active');
+            else el.classList.remove('active');
+        });
 
-    mainContent.innerHTML = `
+        // Update Top Bar Title
+        pageTitle.textContent = viewName.charAt(0).toUpperCase() + viewName.slice(1);
+
+        // Render Content
+        mainContent.innerHTML = ''; // Clear previous
+        mainContent.className = 'content-area'; // Reset classes
+
+        // Focus Mode Logic
+        if (viewName === 'quiz') {
+            appShell.classList.add('quiz-mode');
+        } else {
+            appShell.classList.remove('quiz-mode');
+        }
+
+        // Security Check
+        if (viewName === 'admin' && (!STATE.currentUser || !STATE.currentUser.isAdmin)) {
+            alert("⛔ Access Denied: Level 99 Clearance Required.");
+            navigateTo('dashboard');
+            return;
+        }
+
+        switch (viewName) {
+            case 'dashboard': renderDashboard(); break;
+            case 'leaderboard': renderLeaderboard(); break;
+            case 'community': renderCommunity(); break;
+            case 'profile': renderProfile(); break;
+            case 'admin':
+                pageTitle.textContent = "System Control";
+                if (AdminController) AdminController.init();
+                else mainContent.innerHTML = "Admin Module Error";
+                break;
+            case 'quiz':
+                pageTitle.textContent = "Active Mission";
+                renderQuiz();
+                break;
+            case 'chapters':
+                pageTitle.textContent = `${params.category} Modules`;
+                renderChapters(params.category);
+                break;
+        }
+    }
+
+    // --- Auth System ---
+
+    /**
+     * Logs in a user.
+     * @param {Object} user - The user object.
+     */
+    function login(user) {
+        STATE.currentUser = user;
+        updateTopBar();
+
+        // Persist Session
+        localStorage.setItem('quizzup_session', JSON.stringify(user));
+
+        // Animation Out
+        authScreen.classList.add('hidden');
+        appShell.classList.remove('hidden');
+
+        // Check if restoring view
+        const lastView = localStorage.getItem('quizzup_last_view') || 'dashboard';
+        navigateTo(lastView);
+        if (!localStorage.getItem('quizzup_session')) triggerGreeting(); // Only greet on fresh login
+    }
+
+    /**
+     * Logs out the current user.
+     */
+    function logout() {
+        STATE.currentUser = null;
+        localStorage.removeItem('quizzup_session');
+        localStorage.removeItem('quizzup_last_view');
+
+        appShell.classList.add('hidden');
+        authScreen.classList.remove('hidden');
+
+        // Reset Forms
+        document.getElementById('login-username').value = '';
+        document.getElementById('login-password').value = '';
+        showAuthForm('login');
+    }
+
+    /**
+     * Switches between login and signup forms.
+     * @param {string} type - 'login' or 'signup'.
+     */
+    function showAuthForm(type) {
+        if (type === 'login') {
+            loginForm.classList.remove('hidden');
+            signupForm.classList.add('hidden');
+            tabLogin.classList.add('active');
+            tabSignup.classList.remove('active');
+            authSwitch.innerHTML = `Don't have an account? <span id="switch-link" style="color:var(--primary); cursor:pointer;">Sign Up</span>`;
+        } else {
+            loginForm.classList.add('hidden');
+            signupForm.classList.remove('hidden');
+            tabLogin.classList.remove('active');
+            tabSignup.classList.add('active');
+            authSwitch.innerHTML = `Already have an account? <span id="switch-link" style="color:var(--primary); cursor:pointer;">Sign In</span>`;
+        }
+        document.getElementById('switch-link').addEventListener('click', () => showAuthForm(type === 'login' ? 'signup' : 'login'));
+    }
+
+    /**
+     * Updates the top bar with user info.
+     */
+    function updateTopBar() {
+        if (!STATE.currentUser) return;
+
+        walletDisplay.textContent = (STATE.currentUser.points || 0).toLocaleString();
+
+        const initial = STATE.currentUser.name.charAt(0).toUpperCase();
+        headerInitial.textContent = initial;
+
+        if (STATE.currentUser.profilePic) {
+            headerProfileImg.src = STATE.currentUser.profilePic;
+            headerProfileImg.classList.remove('hidden');
+            headerInitial.classList.add('hidden');
+        } else {
+            headerProfileImg.classList.add('hidden');
+            headerInitial.classList.remove('hidden');
+        }
+    }
+
+    // --- View Renderers ---
+
+    /**
+     * Renders the Dashboard view.
+     */
+    function renderDashboard() {
+        const user = STATE.currentUser;
+        const rank = [...STATE.users].sort((a, b) => b.points - a.points).findIndex(u => u.username === user.username) + 1;
+
+        // Check if DataManager needs reload
+        const subjects = Object.keys(DataManager.getQuizData());
+
+        mainContent.innerHTML = `
         ${user.isAdmin ? `<button onclick="navigateTo('admin')" class="primary-btn" style="width:100%; margin-bottom:1.5rem; background: var(--tertiary);">⚙️ Access Admin Panel</button>` : ''}
 
         <div class="dashboard-hero fade-in">
@@ -302,31 +332,31 @@ function renderDashboard() {
             `).join('')}
         </div>
     `;
-}
+    }
 
-/**
- * Returns an icon for a category.
- * @param {string} cat - The category name.
- * @returns {string} The emoji icon.
- */
-function getCategoryIcon(cat) {
-    const icons = {
-        SPM: '📊', DSA: '💻', HCI: '🎨', OS: '⚙️'
-    };
-    return icons[cat] || '📚';
-}
+    /**
+     * Returns an icon for a category.
+     * @param {string} cat - The category name.
+     * @returns {string} The emoji icon.
+     */
+    function getCategoryIcon(cat) {
+        const icons = {
+            SPM: '📊', DSA: '💻', HCI: '🎨', OS: '⚙️'
+        };
+        return icons[cat] || '📚';
+    }
 
-/**
- * Renders the chapters for a selected category.
- * @param {string} category - The category name.
- */
-function renderChapters(category) {
-    const allData = DataManager.getQuizData();
-    // Ensure MIXED is always available as the first option, filtering out if it exists in DB to avoid dupes
-    const rawChapters = Object.keys(allData[category] || {}).filter(c => c !== 'MIXED');
-    const chapters = ['MIXED', ...rawChapters];
+    /**
+     * Renders the chapters for a selected category.
+     * @param {string} category - The category name.
+     */
+    function renderChapters(category) {
+        const allData = DataManager.getQuizData();
+        // Ensure MIXED is always available as the first option, filtering out if it exists in DB to avoid dupes
+        const rawChapters = Object.keys(allData[category] || {}).filter(c => c !== 'MIXED');
+        const chapters = ['MIXED', ...rawChapters];
 
-    mainContent.innerHTML = `
+        mainContent.innerHTML = `
         <button class="secondary-btn" onclick="navigateTo('dashboard')" style="margin-bottom: 2rem;">← Back to Dashboard</button>
         <div class="cards-grid fade-in">
             ${chapters.map((ch, index) => `
@@ -349,116 +379,116 @@ function renderChapters(category) {
             `).join('')}
         </div>
     `;
-}
-
-/**
- * Toggles a chapter dropdown menu.
- * @param {string} menuId - The ID of the menu element.
- */
-window.toggleChapterMenu = function (menuId) {
-    // Close all other menus first
-    document.querySelectorAll('.chapter-dropdown').forEach(el => {
-        if (el.id !== menuId) el.classList.remove('active');
-    });
-
-    const menu = document.getElementById(menuId);
-    if (menu) {
-        menu.classList.toggle('active');
-    }
-};
-
-/**
- * Starts a quiz directly from the chapter selection.
- * @param {Event} e - The click event.
- * @param {string} category - The category.
- * @param {string} chapter - The chapter.
- * @param {string} type - The quiz type.
- */
-window.startDirectQuiz = function (e, category, chapter, type) {
-    e.stopPropagation(); // Prevent bubbling
-
-    STATE.quiz.category = category;
-    STATE.quiz.chapter = chapter;
-    STATE.quiz.type = type;
-
-    startQuiz(); // Reuse core logic
-};
-
-function openQuizSettings(category, chapter) {
-    // Legacy function kept for reference or backup, but unused in new flow
-    STATE.quiz.category = category;
-    STATE.quiz.chapter = chapter;
-    settingsOverlay.classList.remove('hidden');
-}
-
-/**
- * Initializes and starts the quiz based on STATE.quiz configuration.
- */
-function startQuiz() {
-    settingsOverlay.classList.add('hidden');
-
-    // Prepare Data from DataManager
-    const allData = DataManager.getQuizData();
-    let pool = [];
-    const cat = STATE.quiz.category;
-    const ch = STATE.quiz.chapter;
-
-    if (ch === 'MIXED' || ch.toUpperCase() === 'MIXED') {
-        // Gather all chapters for this category
-        const chapterObj = allData[cat] || {};
-        const chapters = Object.values(chapterObj);
-        pool = chapters.flat();
-    } else {
-        pool = (allData[cat] && allData[cat][ch]) ? allData[cat][ch] : [];
     }
 
-    // Filter Type
-    if (STATE.quiz.type !== 'mixed') {
-        pool = pool.filter(q => q.type === STATE.quiz.type);
-    }
+    /**
+     * Toggles a chapter dropdown menu.
+     * @param {string} menuId - The ID of the menu element.
+     */
+    window.toggleChapterMenu = function (menuId) {
+        // Close all other menus first
+        document.querySelectorAll('.chapter-dropdown').forEach(el => {
+            if (el.id !== menuId) el.classList.remove('active');
+        });
 
-    if (pool.length === 0) {
-        alert("No questions available for this configuration.");
-        return;
-    }
-
-    // Shuffle and Limit to 10
-    // Fix: Create a copy before sorting to avoid mutating the original data source
-    pool = [...pool].sort(() => Math.random() - 0.5).slice(0, 10);
-
-    STATE.quiz.data = pool;
-    STATE.quiz.index = 0;
-    STATE.quiz.score = 0;
-    STATE.quiz.history = []; // Reset history for review
-    STATE.quiz.timer = 0;
-
-    // Start Timer
-    if (STATE.quiz.timerInterval) clearInterval(STATE.quiz.timerInterval);
-    STATE.quiz.timerInterval = setInterval(() => {
-        STATE.quiz.timer++;
-        const timerEl = document.getElementById('quiz-timer');
-        if (timerEl) {
-            const m = Math.floor(STATE.quiz.timer / 60).toString().padStart(2, '0');
-            const s = (STATE.quiz.timer % 60).toString().padStart(2, '0');
-            timerEl.textContent = `${m}:${s}`;
+        const menu = document.getElementById(menuId);
+        if (menu) {
+            menu.classList.toggle('active');
         }
-    }, 1000);
+    };
 
-    navigateTo('quiz');
-}
+    /**
+     * Starts a quiz directly from the chapter selection.
+     * @param {Event} e - The click event.
+     * @param {string} category - The category.
+     * @param {string} chapter - The chapter.
+     * @param {string} type - The quiz type.
+     */
+    window.startDirectQuiz = function (e, category, chapter, type) {
+        e.stopPropagation(); // Prevent bubbling
 
-/**
- * Renders the current question in the quiz.
- */
-function renderQuiz() {
-    const q = STATE.quiz.data[STATE.quiz.index];
-    const progress = ((STATE.quiz.index) / STATE.quiz.data.length) * 100;
+        STATE.quiz.category = category;
+        STATE.quiz.chapter = chapter;
+        STATE.quiz.type = type;
 
-    // Format Timer for initial render
-    const m = Math.floor(STATE.quiz.timer / 60).toString().padStart(2, '0');
-    const s = (STATE.quiz.timer % 60).toString().padStart(2, '0');
+        startQuiz(); // Reuse core logic
+    };
 
-    mainContent.innerHTML = `
+    function openQuizSettings(category, chapter) {
+        // Legacy function kept for reference or backup, but unused in new flow
+        STATE.quiz.category = category;
+        STATE.quiz.chapter = chapter;
+        settingsOverlay.classList.remove('hidden');
+    }
+
+    /**
+     * Initializes and starts the quiz based on STATE.quiz configuration.
+     */
+    function startQuiz() {
+        settingsOverlay.classList.add('hidden');
+
+        // Prepare Data from DataManager
+        const allData = DataManager.getQuizData();
+        let pool = [];
+        const cat = STATE.quiz.category;
+        const ch = STATE.quiz.chapter;
+
+        if (ch === 'MIXED' || ch.toUpperCase() === 'MIXED') {
+            // Gather all chapters for this category
+            const chapterObj = allData[cat] || {};
+            const chapters = Object.values(chapterObj);
+            pool = chapters.flat();
+        } else {
+            pool = (allData[cat] && allData[cat][ch]) ? allData[cat][ch] : [];
+        }
+
+        // Filter Type
+        if (STATE.quiz.type !== 'mixed') {
+            pool = pool.filter(q => q.type === STATE.quiz.type);
+        }
+
+        if (pool.length === 0) {
+            alert("No questions available for this configuration.");
+            return;
+        }
+
+        // Shuffle and Limit to 10
+        // Fix: Create a copy before sorting to avoid mutating the original data source
+        pool = [...pool].sort(() => Math.random() - 0.5).slice(0, 10);
+
+        STATE.quiz.data = pool;
+        STATE.quiz.index = 0;
+        STATE.quiz.score = 0;
+        STATE.quiz.history = []; // Reset history for review
+        STATE.quiz.timer = 0;
+
+        // Start Timer
+        if (STATE.quiz.timerInterval) clearInterval(STATE.quiz.timerInterval);
+        STATE.quiz.timerInterval = setInterval(() => {
+            STATE.quiz.timer++;
+            const timerEl = document.getElementById('quiz-timer');
+            if (timerEl) {
+                const m = Math.floor(STATE.quiz.timer / 60).toString().padStart(2, '0');
+                const s = (STATE.quiz.timer % 60).toString().padStart(2, '0');
+                timerEl.textContent = `${m}:${s}`;
+            }
+        }, 1000);
+
+        navigateTo('quiz');
+    }
+
+    /**
+     * Renders the current question in the quiz.
+     */
+    function renderQuiz() {
+        const q = STATE.quiz.data[STATE.quiz.index];
+        const progress = ((STATE.quiz.index) / STATE.quiz.data.length) * 100;
+
+        // Format Timer for initial render
+        const m = Math.floor(STATE.quiz.timer / 60).toString().padStart(2, '0');
+        const s = (STATE.quiz.timer % 60).toString().padStart(2, '0');
+
+        mainContent.innerHTML = `
         <div class="quiz-wrapper fade-in">
             <!-- Header Stats -->
             <div class="quiz-header-stats">
@@ -481,10 +511,10 @@ function renderQuiz() {
 
                 <div class="options-grid">
                     ${q.type === 'mcq'
-            ? q.options.map((opt, i) => `<button class="option-btn" onclick="handleAnswer(${i})">${opt}</button>`).join('')
-            : `<button class="option-btn" onclick="handleAnswer('true')">True</button>
+                ? q.options.map((opt, i) => `<button class="option-btn" onclick="handleAnswer(${i})">${opt}</button>`).join('')
+                : `<button class="option-btn" onclick="handleAnswer('true')">True</button>
                            <button class="option-btn" onclick="handleAnswer('false')">False</button>`
-        }
+            }
                 </div>
 
                 <!-- Feedback Area (Hidden initially) -->
@@ -496,134 +526,134 @@ function renderQuiz() {
             </div>
         </div>
     `;
-}
-
-/**
- * Handles the user's answer selection.
- * @param {number|string} answer - The selected answer index (MCQ) or 'true'/'false' (TF).
- */
-window.handleAnswer = function (answer) {
-    const q = STATE.quiz.data[STATE.quiz.index];
-    const btns = document.querySelectorAll('.option-btn');
-    const feedbackArea = document.getElementById('feedback-area');
-    const feedbackTitle = document.getElementById('feedback-title');
-    const feedbackText = document.getElementById('feedback-text');
-
-    // Stop Timer temporarily? No, keep it running for total time.
-
-    // Disable all
-    btns.forEach(b => b.disabled = true);
-
-    let isCorrect = false;
-    let userAnswerText = "";
-
-    if (q.type === 'mcq') {
-        isCorrect = parseInt(answer) === q.correct;
-        userAnswerText = q.options[answer];
-    } else {
-        isCorrect = (answer === 'true') === q.answer;
-        userAnswerText = answer === 'true' ? 'True' : 'False';
     }
 
-    // Store for Review
-    STATE.quiz.history.push({
-        question: q,
-        userAnswer: userAnswerText,
-        isCorrect: isCorrect
-    });
+    /**
+     * Handles the user's answer selection.
+     * @param {number|string} answer - The selected answer index (MCQ) or 'true'/'false' (TF).
+     */
+    window.handleAnswer = function (answer) {
+        const q = STATE.quiz.data[STATE.quiz.index];
+        const btns = document.querySelectorAll('.option-btn');
+        const feedbackArea = document.getElementById('feedback-area');
+        const feedbackTitle = document.getElementById('feedback-title');
+        const feedbackText = document.getElementById('feedback-text');
 
-    // Highlight & Animate
-    if (q.type === 'mcq') {
-        const selectedBtn = btns[answer];
-        selectedBtn.classList.add(isCorrect ? 'correct' : 'wrong');
-        selectedBtn.classList.add(isCorrect ? 'pop-anim' : 'shake-anim');
+        // Stop Timer temporarily? No, keep it running for total time.
 
-        if (!isCorrect) {
-            btns[q.correct].classList.add('correct'); // Show correct one
+        // Disable all
+        btns.forEach(b => b.disabled = true);
+
+        let isCorrect = false;
+        let userAnswerText = "";
+
+        if (q.type === 'mcq') {
+            isCorrect = parseInt(answer) === q.correct;
+            userAnswerText = q.options[answer];
+        } else {
+            isCorrect = (answer === 'true') === q.answer;
+            userAnswerText = answer === 'true' ? 'True' : 'False';
         }
-    } else {
-        const selectedBtn = Array.from(btns).find(b => b.textContent.trim() === (answer === 'true' ? 'True' : 'False'));
-        selectedBtn.classList.add(isCorrect ? 'correct' : 'wrong');
-        selectedBtn.classList.add(isCorrect ? 'pop-anim' : 'shake-anim');
 
-        if (!isCorrect) {
-            const correctBtn = Array.from(btns).find(b => b.textContent.trim() === (q.answer ? 'True' : 'False'));
-            correctBtn.classList.add('correct');
+        // Store for Review
+        STATE.quiz.history.push({
+            question: q,
+            userAnswer: userAnswerText,
+            isCorrect: isCorrect
+        });
+
+        // Highlight & Animate
+        if (q.type === 'mcq') {
+            const selectedBtn = btns[answer];
+            selectedBtn.classList.add(isCorrect ? 'correct' : 'wrong');
+            selectedBtn.classList.add(isCorrect ? 'pop-anim' : 'shake-anim');
+
+            if (!isCorrect) {
+                btns[q.correct].classList.add('correct'); // Show correct one
+            }
+        } else {
+            const selectedBtn = Array.from(btns).find(b => b.textContent.trim() === (answer === 'true' ? 'True' : 'False'));
+            selectedBtn.classList.add(isCorrect ? 'correct' : 'wrong');
+            selectedBtn.classList.add(isCorrect ? 'pop-anim' : 'shake-anim');
+
+            if (!isCorrect) {
+                const correctBtn = Array.from(btns).find(b => b.textContent.trim() === (q.answer ? 'True' : 'False'));
+                correctBtn.classList.add('correct');
+            }
         }
+
+        if (isCorrect) {
+            STATE.quiz.score++;
+            document.getElementById('quiz-score').textContent = STATE.quiz.score;
+            feedbackTitle.textContent = "Correct! 🎉";
+            feedbackTitle.style.color = "var(--success)";
+        } else {
+            feedbackTitle.textContent = "Incorrect ⚠️";
+            feedbackTitle.style.color = "var(--danger)";
+        }
+
+        // Explanation Text
+        if (q.explanation) {
+            feedbackText.innerHTML = `<strong style="color:var(--tertiary); display:block; margin-bottom:0.5rem;">💡 Insight</strong> ${q.explanation}`;
+        } else {
+            feedbackText.textContent = isCorrect ? "Great job! Keep up the momentum." : "Review this topic in the study material.";
+        }
+
+        // Show Feedback
+        feedbackArea.classList.remove('hidden');
+        feedbackArea.classList.add('fade-up');
+
+        // Scroll to bottom to see feedback if needed
+        feedbackArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
-    if (isCorrect) {
-        STATE.quiz.score++;
-        document.getElementById('quiz-score').textContent = STATE.quiz.score;
-        feedbackTitle.textContent = "Correct! 🎉";
-        feedbackTitle.style.color = "var(--success)";
-    } else {
-        feedbackTitle.textContent = "Incorrect ⚠️";
-        feedbackTitle.style.color = "var(--danger)";
-    }
+    /**
+     * Proceeds to the next question or finishes the quiz.
+     */
+    window.nextQuestion = function () {
+        STATE.quiz.index++;
+        if (STATE.quiz.index < STATE.quiz.data.length) {
+            renderQuiz();
+        } else {
+            finishQuiz();
+        }
+    };
 
-    // Explanation Text
-    if (q.explanation) {
-        feedbackText.innerHTML = `<strong style="color:var(--tertiary); display:block; margin-bottom:0.5rem;">💡 Insight</strong> ${q.explanation}`;
-    } else {
-        feedbackText.textContent = isCorrect ? "Great job! Keep up the momentum." : "Review this topic in the study material.";
-    }
+    /**
+     * Completes the quiz and shows results.
+     */
+    function finishQuiz() {
+        clearInterval(STATE.quiz.timerInterval);
+        const total = STATE.quiz.data.length;
+        const score = STATE.quiz.score;
+        const accuracy = Math.round((score / total) * 100);
+        const points = score * 10;
 
-    // Show Feedback
-    feedbackArea.classList.remove('hidden');
-    feedbackArea.classList.add('fade-up');
+        // Update User
+        STATE.currentUser.points = (STATE.currentUser.points || 0) + points;
+        STATE.currentUser.level = Math.floor(STATE.currentUser.points / 500) + 1;
 
-    // Scroll to bottom to see feedback if needed
-    feedbackArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
+        // Rolling Average Accuracy
+        const oldAcc = STATE.currentUser.accuracy || 0;
+        STATE.currentUser.accuracy = oldAcc === 0 ? accuracy : Math.round((oldAcc + accuracy) / 2);
 
-/**
- * Proceeds to the next question or finishes the quiz.
- */
-window.nextQuestion = function () {
-    STATE.quiz.index++;
-    if (STATE.quiz.index < STATE.quiz.data.length) {
-        renderQuiz();
-    } else {
-        finishQuiz();
-    }
-};
+        // Save
+        const uIdx = STATE.users.findIndex(u => u.username === STATE.currentUser.username);
+        STATE.users[uIdx] = STATE.currentUser;
+        saveUsers();
+        updateTopBar();
 
-/**
- * Completes the quiz and shows results.
- */
-function finishQuiz() {
-    clearInterval(STATE.quiz.timerInterval);
-    const total = STATE.quiz.data.length;
-    const score = STATE.quiz.score;
-    const accuracy = Math.round((score / total) * 100);
-    const points = score * 10;
+        // Save History
+        saveHistory({
+            timestamp: new Date().toISOString(),
+            category: STATE.quiz.category,
+            chapter: STATE.quiz.chapter,
+            score: score,
+            total: total,
+            points: points
+        });
 
-    // Update User
-    STATE.currentUser.points = (STATE.currentUser.points || 0) + points;
-    STATE.currentUser.level = Math.floor(STATE.currentUser.points / 500) + 1;
-
-    // Rolling Average Accuracy
-    const oldAcc = STATE.currentUser.accuracy || 0;
-    STATE.currentUser.accuracy = oldAcc === 0 ? accuracy : Math.round((oldAcc + accuracy) / 2);
-
-    // Save
-    const uIdx = STATE.users.findIndex(u => u.username === STATE.currentUser.username);
-    STATE.users[uIdx] = STATE.currentUser;
-    saveUsers();
-    updateTopBar();
-
-    // Save History
-    saveHistory({
-        timestamp: new Date().toISOString(),
-        category: STATE.quiz.category,
-        chapter: STATE.quiz.chapter,
-        score: score,
-        total: total,
-        points: points
-    });
-
-    mainContent.innerHTML = `
+        mainContent.innerHTML = `
         <div class="quiz-wrapper fade-in text-center">
             <div class="quiz-card">
                 <div style="font-size: 4rem; margin-bottom: 1rem;">${accuracy >= 80 ? '🏆' : (accuracy >= 50 ? '👍' : '📚')}</div>
@@ -656,46 +686,46 @@ function finishQuiz() {
             </div>
         </div>
     `;
-}
+    }
 
-/**
- * Shares the quiz result to the community feed.
- */
-window.shareToCommunity = function (score, total, category) {
-    const accuracy = Math.round((score / total) * 100);
-    const emoji = accuracy >= 90 ? '🔥' : (accuracy >= 70 ? '🚀' : '📚');
-    const msg = `Just scored ${score}/${total} (${accuracy}%) in the ${category} module! ${emoji} Can anyone beat my accuracy?`;
+    /**
+     * Shares the quiz result to the community feed.
+     */
+    window.shareToCommunity = function (score, total, category) {
+        const accuracy = Math.round((score / total) * 100);
+        const emoji = accuracy >= 90 ? '🔥' : (accuracy >= 70 ? '🚀' : '📚');
+        const msg = `Just scored ${score}/${total} (${accuracy}%) in the ${category} module! ${emoji} Can anyone beat my accuracy?`;
 
-    DataManager.addPost({
-        id: Date.now().toString(),
-        username: STATE.currentUser.username,
-        name: STATE.currentUser.name,
-        avatar: STATE.currentUser.profilePic,
-        content: msg,
-        timestamp: new Date().toISOString(),
-        likes: 0
-    });
+        DataManager.addPost({
+            id: Date.now().toString(),
+            username: STATE.currentUser.username,
+            name: STATE.currentUser.name,
+            avatar: STATE.currentUser.profilePic,
+            content: msg,
+            timestamp: new Date().toISOString(),
+            likes: 0
+        });
 
-    navigateTo('community');
-};
+        navigateTo('community');
+    };
 
-/**
- * Renders the review mode showing user answers.
- */
-window.renderReviewMode = function () {
-    const history = STATE.quiz.history;
+    /**
+     * Renders the review mode showing user answers.
+     */
+    window.renderReviewMode = function () {
+        const history = STATE.quiz.history;
 
-    mainContent.innerHTML = `
+        mainContent.innerHTML = `
         <div class="quiz-wrapper fade-in">
             <button class="secondary-btn" onclick="finishQuiz()" style="margin-bottom: 1.5rem;">← Back to Results</button>
             <h2 style="margin-bottom: 1.5rem;">Mission Review</h2>
 
             <div style="display: flex; flex-direction: column; gap: 1.5rem;">
                 ${history.map((item, i) => {
-        const q = item.question;
-        const correctText = q.type === 'mcq' ? q.options[q.correct] : (q.answer ? 'True' : 'False');
+            const q = item.question;
+            const correctText = q.type === 'mcq' ? q.options[q.correct] : (q.answer ? 'True' : 'False');
 
-        return `
+            return `
                     <div class="glass-card" style="padding: 1.5rem; border-left: 4px solid ${item.isCorrect ? 'var(--success)' : 'var(--danger)'}">
                         <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">Question ${i + 1}</div>
                         <h3 style="font-size: 1.1rem; margin-bottom: 1rem;">${q.question}</h3>
@@ -721,16 +751,16 @@ window.renderReviewMode = function () {
                         ` : ''}
                     </div>
                     `;
-    }).join('')}
+        }).join('')}
             </div>
         </div>
     `;
-};
+    };
 
-function renderLeaderboard() {
-    const sorted = [...STATE.users].sort((a, b) => (b.points || 0) - (a.points || 0));
+    function renderLeaderboard() {
+        const sorted = [...STATE.users].sort((a, b) => (b.points || 0) - (a.points || 0));
 
-    mainContent.innerHTML = `
+        mainContent.innerHTML = `
         <div class="glass-card fade-in" style="padding: 0; overflow: hidden;">
             <table class="leaderboard-table">
                 <thead>
@@ -768,43 +798,43 @@ function renderLeaderboard() {
             </table>
         </div>
     `;
-}
-
-function inspectUser(username) {
-    const user = STATE.users.find(u => u.username === username);
-    if (!user) return;
-
-    document.getElementById('inspect-name').textContent = user.name;
-    document.getElementById('inspect-username').textContent = '@' + user.username;
-    document.getElementById('inspect-points').textContent = user.points.toLocaleString();
-    document.getElementById('inspect-level').textContent = user.level || 1;
-
-    const img = document.getElementById('inspect-img');
-    const init = document.getElementById('inspect-initial');
-
-    if (user.profilePic) {
-        img.src = user.profilePic;
-        img.classList.remove('hidden');
-        init.classList.add('hidden');
-    } else {
-        img.classList.add('hidden');
-        init.classList.remove('hidden');
-        init.textContent = user.name.charAt(0);
     }
 
-    inspectOverlay.classList.remove('hidden');
-}
+    function inspectUser(username) {
+        const user = STATE.users.find(u => u.username === username);
+        if (!user) return;
 
-// Make globally available for onclick events in HTML
-window.inspectUser = inspectUser;
+        document.getElementById('inspect-name').textContent = user.name;
+        document.getElementById('inspect-username').textContent = '@' + user.username;
+        document.getElementById('inspect-points').textContent = user.points.toLocaleString();
+        document.getElementById('inspect-level').textContent = user.level || 1;
 
-function renderProfile() {
-    const user = STATE.currentUser;
-    const historyKey = `quizzup_history_${user.username}`;
-    const history = JSON.parse(localStorage.getItem(historyKey)) || [];
-    const lastSession = history[history.length - 1];
+        const img = document.getElementById('inspect-img');
+        const init = document.getElementById('inspect-initial');
 
-    mainContent.innerHTML = `
+        if (user.profilePic) {
+            img.src = user.profilePic;
+            img.classList.remove('hidden');
+            init.classList.add('hidden');
+        } else {
+            img.classList.add('hidden');
+            init.classList.remove('hidden');
+            init.textContent = user.name.charAt(0);
+        }
+
+        inspectOverlay.classList.remove('hidden');
+    }
+
+    // Make globally available for onclick events in HTML
+    window.inspectUser = inspectUser;
+
+    function renderProfile() {
+        const user = STATE.currentUser;
+        const historyKey = `quizzup_history_${user.username}`;
+        const history = JSON.parse(localStorage.getItem(historyKey)) || [];
+        const lastSession = history[history.length - 1];
+
+        mainContent.innerHTML = `
         <div class="profile-grid fade-in" style="grid-template-columns: 1fr 2fr; gap: 2rem;">
             <!-- ID Card -->
             <div class="glass-card" style="padding: 2rem; text-align: center;">
@@ -884,228 +914,228 @@ function renderProfile() {
         </div>
     `;
 
-    // Bind File Input
-    setTimeout(() => {
-        const input = document.getElementById('new-avatar-upload');
-        if (input) {
-            input.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (ev) => {
-                        STATE.currentUser.profilePic = ev.target.result;
-                        const idx = STATE.users.findIndex(u => u.username === STATE.currentUser.username);
-                        STATE.users[idx] = STATE.currentUser;
-                        saveUsers();
-                        updateTopBar();
-                        renderProfile(); // re-render
-                    };
-                    reader.readAsDataURL(file);
-                }
-            });
-        }
-    }, 100);
-}
+        // Bind File Input
+        setTimeout(() => {
+            const input = document.getElementById('new-avatar-upload');
+            if (input) {
+                input.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (ev) => {
+                            STATE.currentUser.profilePic = ev.target.result;
+                            const idx = STATE.users.findIndex(u => u.username === STATE.currentUser.username);
+                            STATE.users[idx] = STATE.currentUser;
+                            saveUsers();
+                            updateTopBar();
+                            renderProfile(); // re-render
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+        }, 100);
+    }
 
 
-// --- Event Listeners ---
-function setupEventListeners() {
-    // Nav
-    sidebarNavItems.forEach(btn => {
-        btn.addEventListener('click', () => navigateTo(btn.dataset.view));
-    });
-
-    mobileNavItems.forEach(btn => {
-        btn.addEventListener('click', () => navigateTo(btn.dataset.view));
-    });
-
-    logoutBtn.addEventListener('click', logout);
-
-    // Auth
-    tabLogin.addEventListener('click', () => showAuthForm('login'));
-    tabSignup.addEventListener('click', () => showAuthForm('signup'));
-
-    loginForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const u = document.getElementById('login-username').value;
-        const p = document.getElementById('login-password').value;
-
-        // Admin Backdoor
-        if (u === 'admin' && p === 'admin123') {
-            login({ username: 'admin', name: 'System Administrator', points: 99999, level: 99, isAdmin: true });
-            return;
-        }
-
-        const found = STATE.users.find(user => user.username === u && user.password === p);
-
-        if (found) {
-            login(found);
-        } else {
-            document.getElementById('login-error').textContent = 'Invalid credentials.';
-        }
-    });
-
-    signupForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const u = document.getElementById('signup-username').value;
-        const p = document.getElementById('signup-password').value;
-
-        if (p.length < 8) {
-            document.getElementById('signup-error').textContent = 'Password must be at least 8 chars.';
-            return;
-        }
-
-        if (STATE.users.find(user => user.username === u)) {
-            document.getElementById('signup-error').textContent = 'Username taken.';
-            return;
-        }
-
-        const newUser = {
-            username: u,
-            name: u, // Default name
-            password: p,
-            points: 0,
-            level: 1,
-            profilePic: null
-        };
-
-        STATE.users.push(newUser);
-        saveUsers();
-
-        // Intro Sequence Logic
-        runIntro(newUser);
-    });
-
-    // Quiz Settings
-    closeSettingsBtn.addEventListener('click', () => settingsOverlay.classList.add('hidden'));
-    startQuizBtn.addEventListener('click', startQuiz);
-
-    typeOptions.forEach(opt => {
-        opt.addEventListener('click', () => {
-            typeOptions.forEach(o => o.classList.remove('selected'));
-            opt.classList.add('selected');
-            STATE.quiz.type = opt.dataset.type;
+    // --- Event Listeners ---
+    function setupEventListeners() {
+        // Nav
+        sidebarNavItems.forEach(btn => {
+            btn.addEventListener('click', () => navigateTo(btn.dataset.view));
         });
-    });
 
-    // Inspect
-    closeInspectBtn.addEventListener('click', () => inspectOverlay.classList.add('hidden'));
-}
+        mobileNavItems.forEach(btn => {
+            btn.addEventListener('click', () => navigateTo(btn.dataset.view));
+        });
 
-/**
- * Runs the intro animation sequence.
- * @param {Object} user
- */
-function runIntro(user) {
-    authScreen.classList.add('hidden');
-    initSequence.classList.remove('hidden');
-    document.getElementById('intro-user-name').textContent = user.name.toUpperCase();
+        logoutBtn.addEventListener('click', logout);
 
-    // Simple timeout based animation to replace GSAP complexity for stability
-    const tl = gsap.timeline();
-    tl.to('.intro-logo', { scale: 1, opacity: 1, duration: 1 })
-        .to('.intro-welcome', { opacity: 1, y: 0, duration: 0.5 })
-        .to({}, { duration: 1.5 }) // Wait
-        .to(initSequence, {
-            opacity: 0, duration: 0.5, onComplete: () => {
-                initSequence.classList.add('hidden');
-                login(user);
+        // Auth
+        tabLogin.addEventListener('click', () => showAuthForm('login'));
+        tabSignup.addEventListener('click', () => showAuthForm('signup'));
+
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const u = document.getElementById('login-username').value;
+            const p = document.getElementById('login-password').value;
+
+            // Admin Backdoor
+            if (u === 'admin' && p === 'admin123') {
+                login({ username: 'admin', name: 'System Administrator', points: 99999, level: 99, isAdmin: true });
+                return;
+            }
+
+            const found = STATE.users.find(user => user.username === u && user.password === p);
+
+            if (found) {
+                login(found);
+            } else {
+                document.getElementById('login-error').textContent = 'Invalid credentials.';
             }
         });
-}
 
-function triggerGreeting() {
-    heroDrone.classList.remove('hidden');
-    gsap.fromTo(heroDrone, { x: 300, opacity: 0 }, { x: 0, opacity: 1, duration: 1 });
-    setTimeout(() => {
-        gsap.to(heroDrone, { x: 300, opacity: 0, duration: 1, onComplete: () => heroDrone.classList.add('hidden') });
-    }, 3000);
-}
+        signupForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const u = document.getElementById('signup-username').value;
+            const p = document.getElementById('signup-password').value;
 
-// --- Profile Edit Helpers ---
-window.toggleEditProfile = function () {
-    const form = document.getElementById('edit-profile-form');
-    form.classList.toggle('hidden');
-};
+            if (p.length < 8) {
+                document.getElementById('signup-error').textContent = 'Password must be at least 8 chars.';
+                return;
+            }
 
-window.saveProfileChanges = function () {
-    const nameInput = document.getElementById('edit-name');
-    const passInput = document.getElementById('edit-pass');
+            if (STATE.users.find(user => user.username === u)) {
+                document.getElementById('signup-error').textContent = 'Username taken.';
+                return;
+            }
 
-    if (nameInput.value) STATE.currentUser.name = nameInput.value;
-    if (passInput.value && passInput.value.length >= 8) STATE.currentUser.password = passInput.value;
+            const newUser = {
+                username: u,
+                name: u, // Default name
+                password: p,
+                points: 0,
+                level: 1,
+                profilePic: null
+            };
 
-    const idx = STATE.users.findIndex(u => u.username === STATE.currentUser.username);
-    STATE.users[idx] = STATE.currentUser;
-    saveUsers();
+            STATE.users.push(newUser);
+            saveUsers();
 
-    updateTopBar();
-    renderProfile();
-    alert("Profile Updated Successfully.");
-};
+            // Intro Sequence Logic
+            runIntro(newUser);
+        });
 
-// Start
-init();
+        // Quiz Settings
+        closeSettingsBtn.addEventListener('click', () => settingsOverlay.classList.add('hidden'));
+        startQuizBtn.addEventListener('click', startQuiz);
 
-/* =========================================
-   COMMUNITY HUB & CHAT SYSTEM (ASYNC V2 - JOLCE ARCHITECTURE)
-   ========================================= */
+        typeOptions.forEach(opt => {
+            opt.addEventListener('click', () => {
+                typeOptions.forEach(o => o.classList.remove('selected'));
+                opt.classList.add('selected');
+                STATE.quiz.type = opt.dataset.type;
+            });
+        });
 
-// Virtual Scroller Logic (Vanilla JS)
-class VirtualScroller {
-    constructor(containerId, itemHeight, renderItemFn) {
-        this.container = document.getElementById(containerId);
-        this.itemHeight = itemHeight;
-        this.renderItem = renderItemFn;
-        this.items = [];
-        this.visibleItems = 20; // Viewport size roughly
+        // Inspect
+        closeInspectBtn.addEventListener('click', () => inspectOverlay.classList.add('hidden'));
+    }
 
-        if (this.container) {
-            this.container.addEventListener('scroll', () => this.onScroll());
+    /**
+     * Runs the intro animation sequence.
+     * @param {Object} user
+     */
+    function runIntro(user) {
+        authScreen.classList.add('hidden');
+        initSequence.classList.remove('hidden');
+        document.getElementById('intro-user-name').textContent = user.name.toUpperCase();
+
+        // Simple timeout based animation to replace GSAP complexity for stability
+        const tl = gsap.timeline();
+        tl.to('.intro-logo', { scale: 1, opacity: 1, duration: 1 })
+            .to('.intro-welcome', { opacity: 1, y: 0, duration: 0.5 })
+            .to({}, { duration: 1.5 }) // Wait
+            .to(initSequence, {
+                opacity: 0, duration: 0.5, onComplete: () => {
+                    initSequence.classList.add('hidden');
+                    login(user);
+                }
+            });
+    }
+
+    function triggerGreeting() {
+        heroDrone.classList.remove('hidden');
+        gsap.fromTo(heroDrone, { x: 300, opacity: 0 }, { x: 0, opacity: 1, duration: 1 });
+        setTimeout(() => {
+            gsap.to(heroDrone, { x: 300, opacity: 0, duration: 1, onComplete: () => heroDrone.classList.add('hidden') });
+        }, 3000);
+    }
+
+    // --- Profile Edit Helpers ---
+    window.toggleEditProfile = function () {
+        const form = document.getElementById('edit-profile-form');
+        form.classList.toggle('hidden');
+    };
+
+    window.saveProfileChanges = function () {
+        const nameInput = document.getElementById('edit-name');
+        const passInput = document.getElementById('edit-pass');
+
+        if (nameInput.value) STATE.currentUser.name = nameInput.value;
+        if (passInput.value && passInput.value.length >= 8) STATE.currentUser.password = passInput.value;
+
+        const idx = STATE.users.findIndex(u => u.username === STATE.currentUser.username);
+        STATE.users[idx] = STATE.currentUser;
+        saveUsers();
+
+        updateTopBar();
+        renderProfile();
+        alert("Profile Updated Successfully.");
+    };
+
+    // Start
+    init();
+
+    /* =========================================
+       COMMUNITY HUB & CHAT SYSTEM (ASYNC V2 - JOLCE ARCHITECTURE)
+       ========================================= */
+
+    // Virtual Scroller Logic (Vanilla JS)
+    class VirtualScroller {
+        constructor(containerId, itemHeight, renderItemFn) {
+            this.container = document.getElementById(containerId);
+            this.itemHeight = itemHeight;
+            this.renderItem = renderItemFn;
+            this.items = [];
+            this.visibleItems = 20; // Viewport size roughly
+
+            if (this.container) {
+                this.container.addEventListener('scroll', () => this.onScroll());
+            }
+        }
+
+        setData(items) {
+            this.items = items;
+            this.render();
+        }
+
+        render() {
+            if (!this.container) return;
+            // Simplified Logic: Just render last 50 for now to ensure stability
+            // Full virtual scrolling requires a spacer div and calculation
+            // For this version, we stick to the "Limit 50" robustness rule
+            const visibleInfo = this.items.slice(-50);
+            this.container.innerHTML = visibleInfo.map(this.renderItem).join('');
+            this.container.scrollTop = this.container.scrollHeight;
+        }
+
+        onScroll() {
+            // Future expansion: Dynamic loading
         }
     }
 
-    setData(items) {
-        this.items = items;
-        this.render();
-    }
+    async function renderCommunity() {
+        pageTitle.textContent = "Global Nexus";
 
-    render() {
-        if (!this.container) return;
-        // Simplified Logic: Just render last 50 for now to ensure stability
-        // Full virtual scrolling requires a spacer div and calculation
-        // For this version, we stick to the "Limit 50" robustness rule
-        const visibleInfo = this.items.slice(-50);
-        this.container.innerHTML = visibleInfo.map(this.renderItem).join('');
-        this.container.scrollTop = this.container.scrollHeight;
-    }
+        // Show Loading State
+        mainContent.innerHTML = `<div class="loader">Accessing Secure Vault...</div>`;
 
-    onScroll() {
-        // Future expansion: Dynamic loading
-    }
-}
+        // Get stored data via DataManager (ASYNC)
+        // Note: DataManager methods were patched to be async
+        let posts = [];
+        let chat = [];
 
-async function renderCommunity() {
-    pageTitle.textContent = "Global Nexus";
+        try {
+            posts = await DataManager.getPosts();
+            chat = await DataManager.getChatHistory();
+        } catch (e) {
+            console.warn("Async fetch failed, using fallback", e);
+            posts = JSON.parse(localStorage.getItem('quizzup_posts_v3')) || [];
+            chat = JSON.parse(localStorage.getItem('quizzup_chat_v3')) || [];
+        }
 
-    // Show Loading State
-    mainContent.innerHTML = `<div class="loader">Accessing Secure Vault...</div>`;
-
-    // Get stored data via DataManager (ASYNC)
-    // Note: DataManager methods were patched to be async
-    let posts = [];
-    let chat = [];
-
-    try {
-        posts = await DataManager.getPosts();
-        chat = await DataManager.getChatHistory();
-    } catch (e) {
-        console.warn("Async fetch failed, using fallback", e);
-        posts = JSON.parse(localStorage.getItem('quizzup_posts_v3')) || [];
-        chat = JSON.parse(localStorage.getItem('quizzup_chat_v3')) || [];
-    }
-
-    mainContent.innerHTML = `
+        mainContent.innerHTML = `
         <div class="community-layout fade-in">
             <!-- Left Column: Activity Feed -->
             <div class="feed-section">
@@ -1136,7 +1166,7 @@ async function renderCommunity() {
                 <!-- Feed Stream -->
                 <div id="feed-stream" class="feed-stream">
                     ${posts.length === 0 ? '<div class="empty-state">No meaningful signals detected yet. Be the first to transmit.</div>' :
-            posts.map(post => renderPostHTML(post)).join('')}
+                posts.map(post => renderPostHTML(post)).join('')}
                 </div>
             </div>
 
@@ -1165,14 +1195,14 @@ async function renderCommunity() {
         </div>
     `;
 
-    // Init Virtual Scroller for Chat
-    window.chatScroller = new VirtualScroller('chat-messages', 60, renderChatHTML);
-    window.chatScroller.setData(chat);
-}
+        // Init Virtual Scroller for Chat
+        window.chatScroller = new VirtualScroller('chat-messages', 60, renderChatHTML);
+        window.chatScroller.setData(chat);
+    }
 
-function renderChatHTML(msg) {
-    const isMe = msg.username === STATE.currentUser.username;
-    return `
+    function renderChatHTML(msg) {
+        const isMe = msg.username === STATE.currentUser.username;
+        return `
         <div class="chat-message ${isMe ? 'my-message' : ''}">
             <div class="chat-bubble">
                 <div class="chat-user">${msg.name}</div>
@@ -1180,210 +1210,210 @@ function renderChatHTML(msg) {
             </div>
         </div>
     `;
-}
-
-// Image Handling Logic
-window.triggerImageUpload = () => document.getElementById('img-upload-hidden').click();
-window.currentPostImage = null;
-
-window.handleImageSelect = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = (evt) => {
-            window.currentPostImage = evt.target.result; // Base64
-            const prev = document.getElementById('img-preview');
-            const area = document.getElementById('img-preview-area');
-            prev.src = window.currentPostImage;
-            area.classList.remove('hidden');
-        };
-        reader.readAsDataURL(file);
     }
-};
 
-window.clearImageUpload = () => {
+    // Image Handling Logic
+    window.triggerImageUpload = () => document.getElementById('img-upload-hidden').click();
     window.currentPostImage = null;
-    document.getElementById('img-preview-area').classList.add('hidden');
-    document.getElementById('img-upload-hidden').value = '';
-};
 
-window.submitPost = async function () {
-    const input = document.getElementById('post-input');
-    const content = input.value.trim();
-
-    if (!content && !window.currentPostImage) return;
-
-    const newPost = {
-        id: Date.now().toString(),
-        username: STATE.currentUser.username,
-        name: STATE.currentUser.name,
-        avatar: STATE.currentUser.profilePic,
-        content: content,
-        image: window.currentPostImage, // Rich Media Support
-        timestamp: new Date().toISOString(),
-        likes: 0
-    };
-
-    await DataManager.addPost(newPost); // Async add
-    await DataManager.addPost(newPost); // Async add
-    // DataManager now handles broadcast 'POST_ADDED'
-
-    input.value = '';
-    clearImageUpload();
-    renderCommunity(); // Re-render triggers async fetch
-};
-
-window.deletePost = function (id) {
-    let posts = DataManager.getPosts();
-    posts = posts.filter(p => p.id !== id);
-    DataManager.savePosts(posts);
-    if (window.RealTime) window.RealTime.broadcast('POST_DELETED', id);
-    renderCommunity();
-};
-
-window.handleChatEnter = function (e) {
-    if (e.key === 'Enter') sendChatMessage();
-};
-
-window.sendChatMessage = async function () {
-    const input = document.getElementById('chat-input');
-    const text = input.value.trim();
-    if (!text) return;
-
-    const msg = {
-        id: Date.now(),
-        username: STATE.currentUser.username,
-        name: STATE.currentUser.name,
-        text: text,
-        timestamp: new Date().toISOString()
-    };
-
-    await DataManager.addChatMessage(msg);
-    await DataManager.addChatMessage(msg);
-    // DataManager handles broadcast 'CHAT_SENT'
-    input.value = '';
-
-    // Optimistic Update
-    if (window.chatScroller) {
-        let current = window.chatScroller.items;
-        current.push(msg);
-        window.chatScroller.setData(current);
-    }
-
-    // Smart Bot Trigger
-    setTimeout(() => {
-        simulateBotReply(); // Now with IDB support
-    }, 2000 + Math.random() * 3000);
-};
-
-function timeAgo(dateString) {
-    const date = new Date(dateString);
-    const now = new Date();
-    const seconds = Math.floor((now - date) / 1000);
-    if (seconds < 60) return 'Just now';
-    const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return `${minutes}m ago`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}h ago`;
-    return date.toLocaleDateString();
-}
-
-// Bot Logic (Refactored to DataManager)
-const BOT_NAMES = ['Aria', 'Nexus', 'Kai', 'Nova', 'System'];
-const BOT_MESSAGES = [
-    "Anyone up for a DSA challenge?",
-    "Need help with OS paging concepts!",
-    "Just hit level 15! 🚀",
-    "This platform is looking slick.",
-    "Good luck everyone!",
-    "Who is top of the leaderboard now?"
-];
-
-function simulateBotReply() {
-    const name = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
-    const text = BOT_MESSAGES[Math.floor(Math.random() * BOT_MESSAGES.length)];
-
-    const msg = {
-        username: 'bot_' + name.toLowerCase(),
-        name: name,
-        text: text,
-        timestamp: new Date().toISOString()
-    };
-
-    DataManager.addChatMessage(msg);
-
-    if (STATE.currentView === 'community') {
-        const chatBox = document.getElementById('chat-messages');
-        if (chatBox) {
-            chatBox.innerHTML += renderChatHTML(msg);
-            chatBox.scrollTop = chatBox.scrollHeight;
+    window.handleImageSelect = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                window.currentPostImage = evt.target.result; // Base64
+                const prev = document.getElementById('img-preview');
+                const area = document.getElementById('img-preview-area');
+                prev.src = window.currentPostImage;
+                area.classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
         }
-    }
-}
+    };
 
-/* =========================================
-   PHASE 3: INTERACTION ENGINE (MANUAL INJECT)
-   ========================================= */
+    window.clearImageUpload = () => {
+        window.currentPostImage = null;
+        document.getElementById('img-preview-area').classList.add('hidden');
+        document.getElementById('img-upload-hidden').value = '';
+    };
 
-window.likePost = async function (btn) {
-    btn.classList.add('active');
-    btn.innerHTML = btn.innerHTML.replace('❤️', '💖');
+    window.submitPost = async function () {
+        const input = document.getElementById('post-input');
+        const content = input.value.trim();
 
-    // Heuristic: Find ID from data attribute or context
-    let postId = btn.dataset.id;
-    if (!postId) return;
+        if (!content && !window.currentPostImage) return;
 
-    let posts = await DataManager.getPosts();
-    const postIndex = posts.findIndex(p => p.id === postId);
-
-    if (postIndex !== -1) {
-        posts[postIndex].likes++;
-        await DataManager.savePosts(posts);
-        window.RealTime.broadcast('LIKE_UPDATED', { postId, newLikes: posts[postIndex].likes });
-        btn.innerHTML = `❤️ ${posts[postIndex].likes}`;
-    }
-};
-
-window.toggleComments = function (postId) {
-    const section = document.getElementById(`comments-${postId}`);
-    if (section) {
-        section.classList.toggle('hidden');
-        if (!section.classList.contains('hidden')) {
-            const input = section.querySelector('.comment-input');
-            if (input) input.focus();
-        }
-    }
-};
-
-window.submitComment = async function (postId) {
-    const input = document.getElementById(`comment-input-${postId}`);
-    if (!input) return;
-    const text = input.value.trim();
-    if (!text) return;
-
-    let posts = await DataManager.getPosts();
-    const postIndex = posts.findIndex(p => p.id === postId);
-
-    if (postIndex !== -1) {
-        const post = posts[postIndex];
-        if (!post.comments) post.comments = [];
-
-        const newComment = {
+        const newPost = {
             id: Date.now().toString(),
-            user: STATE.currentUser.name,
-            text: text,
-            time: new Date().toISOString()
+            username: STATE.currentUser.username,
+            name: STATE.currentUser.name,
+            avatar: STATE.currentUser.profilePic,
+            content: content,
+            image: window.currentPostImage, // Rich Media Support
+            timestamp: new Date().toISOString(),
+            likes: 0
         };
 
-        post.comments.push(newComment);
-        await DataManager.savePosts(posts);
+        await DataManager.addPost(newPost); // Async add
+        await DataManager.addPost(newPost); // Async add
+        // DataManager now handles broadcast 'POST_ADDED'
 
-        // Broadcast new comment
-        if (window.RealTime) window.RealTime.broadcast('COMMENT_ADDED', { postId: postId, comment: newComment });
+        input.value = '';
+        clearImageUpload();
+        renderCommunity(); // Re-render triggers async fetch
+    };
 
-        const list = document.getElementById(`comment-list-${postId}`);
-        if (list) {
-            list.insertAdjacentHTML('beforeend', `
+    window.deletePost = function (id) {
+        let posts = DataManager.getPosts();
+        posts = posts.filter(p => p.id !== id);
+        DataManager.savePosts(posts);
+        if (window.RealTime) window.RealTime.broadcast('POST_DELETED', id);
+        renderCommunity();
+    };
+
+    window.handleChatEnter = function (e) {
+        if (e.key === 'Enter') sendChatMessage();
+    };
+
+    window.sendChatMessage = async function () {
+        const input = document.getElementById('chat-input');
+        const text = input.value.trim();
+        if (!text) return;
+
+        const msg = {
+            id: Date.now(),
+            username: STATE.currentUser.username,
+            name: STATE.currentUser.name,
+            text: text,
+            timestamp: new Date().toISOString()
+        };
+
+        await DataManager.addChatMessage(msg);
+        await DataManager.addChatMessage(msg);
+        // DataManager handles broadcast 'CHAT_SENT'
+        input.value = '';
+
+        // Optimistic Update
+        if (window.chatScroller) {
+            let current = window.chatScroller.items;
+            current.push(msg);
+            window.chatScroller.setData(current);
+        }
+
+        // Smart Bot Trigger
+        setTimeout(() => {
+            simulateBotReply(); // Now with IDB support
+        }, 2000 + Math.random() * 3000);
+    };
+
+    function timeAgo(dateString) {
+        const date = new Date(dateString);
+        const now = new Date();
+        const seconds = Math.floor((now - date) / 1000);
+        if (seconds < 60) return 'Just now';
+        const minutes = Math.floor(seconds / 60);
+        if (minutes < 60) return `${minutes}m ago`;
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return `${hours}h ago`;
+        return date.toLocaleDateString();
+    }
+
+    // Bot Logic (Refactored to DataManager)
+    const BOT_NAMES = ['Aria', 'Nexus', 'Kai', 'Nova', 'System'];
+    const BOT_MESSAGES = [
+        "Anyone up for a DSA challenge?",
+        "Need help with OS paging concepts!",
+        "Just hit level 15! 🚀",
+        "This platform is looking slick.",
+        "Good luck everyone!",
+        "Who is top of the leaderboard now?"
+    ];
+
+    function simulateBotReply() {
+        const name = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
+        const text = BOT_MESSAGES[Math.floor(Math.random() * BOT_MESSAGES.length)];
+
+        const msg = {
+            username: 'bot_' + name.toLowerCase(),
+            name: name,
+            text: text,
+            timestamp: new Date().toISOString()
+        };
+
+        DataManager.addChatMessage(msg);
+
+        if (STATE.currentView === 'community') {
+            const chatBox = document.getElementById('chat-messages');
+            if (chatBox) {
+                chatBox.innerHTML += renderChatHTML(msg);
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
+        }
+    }
+
+    /* =========================================
+       PHASE 3: INTERACTION ENGINE (MANUAL INJECT)
+       ========================================= */
+
+    window.likePost = async function (btn) {
+        btn.classList.add('active');
+        btn.innerHTML = btn.innerHTML.replace('❤️', '💖');
+
+        // Heuristic: Find ID from data attribute or context
+        let postId = btn.dataset.id;
+        if (!postId) return;
+
+        let posts = await DataManager.getPosts();
+        const postIndex = posts.findIndex(p => p.id === postId);
+
+        if (postIndex !== -1) {
+            posts[postIndex].likes++;
+            await DataManager.savePosts(posts);
+            window.RealTime.broadcast('LIKE_UPDATED', { postId, newLikes: posts[postIndex].likes });
+            btn.innerHTML = `❤️ ${posts[postIndex].likes}`;
+        }
+    };
+
+    window.toggleComments = function (postId) {
+        const section = document.getElementById(`comments-${postId}`);
+        if (section) {
+            section.classList.toggle('hidden');
+            if (!section.classList.contains('hidden')) {
+                const input = section.querySelector('.comment-input');
+                if (input) input.focus();
+            }
+        }
+    };
+
+    window.submitComment = async function (postId) {
+        const input = document.getElementById(`comment-input-${postId}`);
+        if (!input) return;
+        const text = input.value.trim();
+        if (!text) return;
+
+        let posts = await DataManager.getPosts();
+        const postIndex = posts.findIndex(p => p.id === postId);
+
+        if (postIndex !== -1) {
+            const post = posts[postIndex];
+            if (!post.comments) post.comments = [];
+
+            const newComment = {
+                id: Date.now().toString(),
+                user: STATE.currentUser.name,
+                text: text,
+                time: new Date().toISOString()
+            };
+
+            post.comments.push(newComment);
+            await DataManager.savePosts(posts);
+
+            // Broadcast new comment
+            if (window.RealTime) window.RealTime.broadcast('COMMENT_ADDED', { postId: postId, comment: newComment });
+
+            const list = document.getElementById(`comment-list-${postId}`);
+            if (list) {
+                list.insertAdjacentHTML('beforeend', `
             <div class="comment-item">
                 <div class="avatar-small" style="width:24px; height:24px; font-size:0.7rem;">${newComment.user.charAt(0)}</div>
                 <div class="comment-bubble">
@@ -1391,17 +1421,17 @@ window.submitComment = async function (postId) {
                     <div>${newComment.text}</div>
                 </div>
             </div>`);
+            }
+            input.value = '';
         }
-        input.value = '';
-    }
-};
+    };
 
-// OVERWRITE RENDER FUNCTION TO ENSURE COMMENTS ARE SEEN
-renderPostHTML = function (post) {
-    const isMe = post.username === STATE.currentUser.username;
-    const commentCount = post.comments ? post.comments.length : 0;
+    // OVERWRITE RENDER FUNCTION TO ENSURE COMMENTS ARE SEEN
+    renderPostHTML = function (post) {
+        const isMe = post.username === STATE.currentUser.username;
+        const commentCount = post.comments ? post.comments.length : 0;
 
-    return `
+        return `
         <div class="glass-card post-card ${post.isHighlight ? 'highlight-post' : ''}">
             <div class="post-header">
                 <div class="flex-center" style="gap: 0.8rem; justify-content: flex-start;">
@@ -1445,28 +1475,29 @@ renderPostHTML = function (post) {
             </div>
         </div>
     `;
-};
+    };
 
-// Helper for Polls
-function renderPollWidget(post) {
-    const totalVotes = post.options.reduce((a, b) => a + b.votes, 0) || 1;
-    return `
+    // Helper for Polls
+    function renderPollWidget(post) {
+        const totalVotes = post.options.reduce((a, b) => a + b.votes, 0) || 1;
+        return `
         <div class="poll-widget" style="margin-bottom:1rem;">
            <div class="poll-options">
                 ${post.options.map((opt, i) => {
-        const pct = totalVotes === 1 && post.options.every(o => o.votes === 0) ? 0 : Math.round((opt.votes / totalVotes) * 100);
-        return `
+            const pct = totalVotes === 1 && post.options.every(o => o.votes === 0) ? 0 : Math.round((opt.votes / totalVotes) * 100);
+            return `
                     <div class="poll-option" onclick="votePoll('${post.id}', ${i})">
                         <div class="poll-bar" style="width: ${pct}%"></div>
                         <span style="position:relative; z-index:2;">${opt.text}</span>
                         <span style="position:relative; z-index:2; float:right;">${pct}%</span>
                     </div>
                     `;
-    }).join('')}
+        }).join('')}
             </div>
         </div>
     `;
-}
+    }
 
-// Start Broadcast
-if (window.RealTime) window.RealTime.broadcast('POST_ADDED', {});
+    // Start Broadcast
+    if (window.RealTime) window.RealTime.broadcast('POST_ADDED', {});
+} // End init logic or closure if active
