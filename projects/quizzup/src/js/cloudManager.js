@@ -62,6 +62,20 @@ const CloudManager = {
         await db.collection('posts').doc(post.id).set(post);
     },
 
+    deletePost: async function (postId) {
+        if (!db) return;
+        await db.collection('posts').doc(postId).delete();
+    },
+
+    deleteUser: async function (username) {
+        if (!db) return;
+        try {
+            await db.collection('users').doc(username).delete();
+        } catch (e) {
+            console.error("Cloud Delete User Error:", e);
+        }
+    },
+
     // --- Quiz Data (Optional: If we want shared question banks) ---
     // For now we keep Quiz Data local JSON as it's static structure
     // But could be moved to cloud later.
